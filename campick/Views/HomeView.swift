@@ -189,11 +189,10 @@ struct HomeView: View {
                         .padding()
 //                        .padding(.bottom,100) 하단배너
                     }
-                    .toolbar {
-                        BottomTabBar(currentSelection: .home)
+                    .safeAreaInset(edge: .bottom) {
+                        BottomTabBarView(currentSelection: .home)
                     }
-                    .toolbarBackground(Color.brandBackground, for: .bottomBar)
-                    .toolbarBackground(.visible, for: .bottomBar)
+                   
                             
                 }
                 
