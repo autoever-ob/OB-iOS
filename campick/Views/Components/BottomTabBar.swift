@@ -12,10 +12,10 @@ enum Tab {
     case home, vehicles, register, favorites, profile
 }
 
-struct BottomTabBar: ToolbarContent {
+struct BottomTabBarView: View {
     var currentSelection: Tab
-    var body: some ToolbarContent {
-        ToolbarItemGroup(placement: .bottomBar) {
+    var body: some View {
+        HStack{
             NavigationLink(destination: HomeView()) {
                 TabItems(icon: "house.fill", label: "홈", active: currentSelection == .home)
             }
@@ -36,7 +36,23 @@ struct BottomTabBar: ToolbarContent {
                 TabItems(icon: "person", label: "프로필", active: currentSelection == .profile)
             }
         }
+        .padding(.horizontal)
+        .padding(.top,10)
+        .padding(.bottom,20)
+        .frame(maxWidth: .infinity)
+        .background(
+            Color.brandBackground
+                .ignoresSafeArea(edges: .bottom)
+                .overlay(
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                        .frame(height:1),
+                    alignment: .top
+                )
+        )
     }
+    
+    
 }
 
 
