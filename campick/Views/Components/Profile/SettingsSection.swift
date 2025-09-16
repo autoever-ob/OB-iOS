@@ -26,7 +26,7 @@ struct SettingsSection: View {
                     viewModel.changePassword()
                 }
 
-                SettingsRow(title: "로그아웃", icon: "arrow.right.square") {
+                SettingsRow(title: "로그아웃", icon: "arrow.right.square", isDestructive: true) {
                     viewModel.showLogoutModal = true
                 }
                 SettingsRow(title: "회원 탈퇴", icon: "xmark.circle", isDestructive: true) {
@@ -102,6 +102,6 @@ struct SettingsRowContent: View {
                 .foregroundColor(.white.opacity(0.4))
                 .font(.system(size: 12))
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 6)
     }
 }

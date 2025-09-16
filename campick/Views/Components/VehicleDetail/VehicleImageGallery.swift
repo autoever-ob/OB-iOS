@@ -149,7 +149,7 @@ struct VehicleImageGallery: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 8)
-                                        .stroke(Color.orange, lineWidth: 1)
+                                        .stroke(AppColors.brandOrange, lineWidth: 1)
                                 )
                             }
                             .padding(.trailing, 16)
@@ -178,7 +178,7 @@ struct ThumbnailImageView: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(
-                            index == currentIndex ? Color.orange : Color.white.opacity(0.2),
+                            index == currentIndex ? AppColors.brandOrange : Color.white.opacity(0.2),
                             lineWidth: 2
                         )
                 )

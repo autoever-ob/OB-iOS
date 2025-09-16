@@ -40,7 +40,7 @@ struct VehicleListingCardProfile: View {
                     .lineLimit(1)
 
                 Text("\(listing.price.formatted())만원")
-                    .foregroundColor(.orange)
+                    .foregroundColor(AppColors.brandOrange)
                     .font(.system(size: 17, weight: .bold))
 
                 HStack(spacing: 12) {
@@ -49,7 +49,7 @@ struct VehicleListingCardProfile: View {
                             .foregroundColor(.white.opacity(0.6))
                             .font(.system(size: 10))
 
-                        Text("\(listing.year)년")
+                        Text("\(String(listing.year))년")
                             .foregroundColor(.white.opacity(0.6))
                             .font(.system(size: 13))
                     }
@@ -59,7 +59,7 @@ struct VehicleListingCardProfile: View {
                             .foregroundColor(.white.opacity(0.6))
                             .font(.system(size: 10))
 
-                        Text("\(listing.mileage.formatted())km")
+                        Text("\(listing.mileage.formatted(.number.grouping(.automatic)))km")
                             .foregroundColor(.white.opacity(0.6))
                             .font(.system(size: 13))
                     }

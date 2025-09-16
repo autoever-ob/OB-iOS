@@ -25,7 +25,7 @@ struct VehicleInfoCard: View {
                     .multilineTextAlignment(.leading)
 
                 HStack {
-                    Text("\(price.formatted(.number.grouping(.never)))만원")
+                    Text("\(price.formatted())만원")
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
 
@@ -53,7 +53,7 @@ struct VehicleInfoCard: View {
                 VehicleDetailItem(
                     icon: "calendar",
                     title: "연식",
-                    value: "\(year)년"
+                    value: "\(String(year))년"
                 )
                 .frame(maxWidth: .infinity)
 
@@ -94,10 +94,10 @@ struct VehicleDetailItem: View {
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: icon)
-                .foregroundColor(.orange)
+                .foregroundColor(AppColors.brandOrange)
                 .font(.title3)
                 .frame(width: 40, height: 40)
-                .background(Color.orange.opacity(0.2))
+                .background(AppColors.brandOrange.opacity(0.2))
                 .clipShape(Circle())
 
             Text(title)
@@ -114,7 +114,7 @@ struct VehicleDetailItem: View {
 
 #Preview {
     ZStack {
-        Color(red: 0.043, green: 0.129, blue: 0.102)
+        AppColors.background
             .ignoresSafeArea()
 
         VehicleInfoCard(

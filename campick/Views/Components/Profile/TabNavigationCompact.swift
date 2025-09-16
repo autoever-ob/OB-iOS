@@ -21,7 +21,7 @@ struct TabNavigationCompact: View {
                         .padding(.vertical, 14)
                         .frame(maxWidth: .infinity)
                         .background(
-                            activeTab == tab ? Color.orange : Color.white.opacity(0.1)
+                            activeTab == tab ? AppColors.brandOrange : Color.white.opacity(0.1)
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
