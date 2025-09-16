@@ -143,7 +143,7 @@ struct HomeView: View {
                                             .fontWeight(.heavy)
                                     }
                                     Spacer()
-                                    NavigationLink(destination: Text("전체 매물")) {
+                                    NavigationLink(destination: CarListView()) {
                                         HStack {
                                             Text("전체보기")
                                                 .foregroundColor(.brandLightOrange)
