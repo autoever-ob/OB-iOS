@@ -39,7 +39,7 @@ struct ProfileHeaderCompact: View {
                         .frame(maxWidth: .infinity, minHeight: 48)
                         .background(
                             LinearGradient(
-                                colors: [Color.orange, Color.orange.opacity(0.8)],
+                                colors: [AppColors.brandOrange, AppColors.brandLightOrange],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
@@ -49,11 +49,5 @@ struct ProfileHeaderCompact: View {
             }
         }
         .padding(16)
-        .background(Color.white.opacity(0.05))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-        )
     }
 }

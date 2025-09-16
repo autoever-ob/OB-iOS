@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct VehicleDetailView: View {
+    @Environment(\.dismiss) private var dismiss
     let vehicleId: String
     @State private var currentImageIndex = 0
     @State private var showSellerModal = false
@@ -41,7 +42,7 @@ struct VehicleDetailView: View {
 
     var body: some View {
         ZStack {
-            Color(red: 0.043, green: 0.129, blue: 0.102)
+            AppColors.background
                 .ignoresSafeArea()
 
             ScrollView {
@@ -50,7 +51,7 @@ struct VehicleDetailView: View {
                         currentImageIndex: $currentImageIndex,
                         images: vehicleData.images,
                         onBackTap: {
-                            print("뒤로가기")
+                            dismiss()
                         },
                         onShareTap: {
                             // TODO: Share functionality
@@ -131,7 +132,7 @@ struct VehicleDetailView: View {
                             .frame(width: 48, height: 48)
                             .background(
                                 LinearGradient(
-                                    gradient: Gradient(colors: [Color(red: 0.976, green: 0.451, blue: 0.086), Color(red: 0.918, green: 0.345, blue: 0.047)]),
+                                    gradient: Gradient(colors: [AppColors.brandOrange, AppColors.brandLightOrange]),
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
@@ -144,7 +145,7 @@ struct VehicleDetailView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 17)
-                .background(Color(red: 0.043, green: 0.129, blue: 0.102).opacity(0.95))
+                .background(AppColors.background.opacity(0.95))
                 .overlay(
                     Rectangle()
                         .frame(height: 1)

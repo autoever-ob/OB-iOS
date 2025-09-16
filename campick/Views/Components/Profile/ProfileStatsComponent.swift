@@ -49,7 +49,7 @@ struct ProfileStatCard: View {
 
 #Preview {
     ZStack {
-        Color(red: 0.043, green: 0.129, blue: 0.102)
+        AppColors.background
             .ignoresSafeArea()
 
         ProfileStatsComponent(

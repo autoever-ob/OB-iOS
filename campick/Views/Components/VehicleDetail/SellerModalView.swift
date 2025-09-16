@@ -19,7 +19,7 @@ struct SellerModalView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(red: 0.043, green: 0.129, blue: 0.102)
+                AppColors.background
                     .ignoresSafeArea()
 
                 VStack(spacing: 24) {
@@ -40,7 +40,7 @@ struct SellerModalView: View {
             }
             .navigationTitle("판매자 정보")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color(red: 0.043, green: 0.129, blue: 0.102), for: .navigationBar)
+            .toolbarBackground(AppColors.background, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {

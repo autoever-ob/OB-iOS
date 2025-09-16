@@ -15,7 +15,7 @@ struct VehicleSellerCard: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "person")
-                    .foregroundColor(.orange)
+                    .foregroundColor(AppColors.brandOrange)
                 Text("판매자 정보")
                     .font(.headline)
                     .fontWeight(.semibold)
@@ -42,7 +42,7 @@ struct VehicleSellerCard: View {
                                     .font(.caption)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
-                                    .background(Color.orange)
+                                    .background(AppColors.brandOrange)
                                     .foregroundColor(.white)
                                     .cornerRadius(8)
                             }
@@ -105,7 +105,7 @@ struct Seller {
 
 #Preview {
     ZStack {
-        Color(red: 0.043, green: 0.129, blue: 0.102)
+        AppColors.background
             .ignoresSafeArea()
 
         VehicleSellerCard(
