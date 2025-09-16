@@ -17,7 +17,7 @@ struct HomeView: View {
                     .ignoresSafeArea()
                 VStack(spacing: 0) {
                     HStack {
-                        Text("CampVan")
+                        Text("Campick")
                             .font(.custom("Pacifico", size: 24))
                             .foregroundColor(.white)
                             .shadow(radius: 2)
