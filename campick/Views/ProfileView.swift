@@ -70,11 +70,11 @@ struct ProfileView: View {
             .navigationTitle(viewModel.isOwnProfile ? "" : "판매자 프로필")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbar {
-                if viewModel.isOwnProfile {
-                    BottomTabBar(currentSelection: .profile)
-                }
-            }
+//            .toolbar {
+//                if viewModel.isOwnProfile {
+//                    BottomTabBar(currentSelection: .profile)
+//                }
+//            }
             .toolbarBackground(Color(red: 0.043, green: 0.129, blue: 0.102), for: .bottomBar)
             .toolbarBackground(viewModel.isOwnProfile ? .visible : .hidden, for: .bottomBar)
             .sheet(isPresented: $viewModel.showEditModal) {
