@@ -24,7 +24,11 @@ struct HomeView: View {
                         
                         Spacer()
                         
-                        Button(action: { showSlideMenu.toggle() }) {
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                    showSlideMenu.toggle()
+                                }
+                        }) {
                             Image(systemName: "person")
                                 .foregroundColor(.white)
                                 .frame(width: 40, height: 40)
@@ -58,7 +62,9 @@ struct HomeView: View {
                                         .font(.title)
                                         .bold()
                                         .foregroundColor(.white)
+                                        .padding(.bottom, 7)
                                     Text("전국 최다 프리미엄 캠핑카 매물")
+                                        .font(.system(size:13))
                                         .foregroundColor(.white.opacity(0.9))
                                 }
                                 .padding()
@@ -79,22 +85,32 @@ struct HomeView: View {
                                                 .foregroundColor(.white)
                                                 .bold()
                                             Text("원하는 캠핑카를 찾아보세요")
-                                                .font(.caption)
+                                                .padding(.top,1)
+                                                .font(.system(size: 10))
                                                 .foregroundColor(.white.opacity(0.7))
+                                            
                                         }
                                     }
                                     Spacer()
                                     Text("NEW")
-                                        .font(.caption)
+                                        .font(.system(size:8))
                                         .bold()
-                                        .padding(6)
+                                        .padding(.vertical, 6)
+                                        .padding(.horizontal,8)
                                         .background(Color.brandOrange)
                                         .foregroundColor(.white)
                                         .clipShape(Capsule())
+                                    Image(systemName: "chevron.right")
+                                        .foregroundColor(.gray)
+                                        .font(.system(size:12))
                                 }
                                 .padding()
-                                .background(.ultraThinMaterial)
+                                .background(.ultraThinMaterial.opacity(0.2))
                                 .cornerRadius(16)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(Color.gray.opacity(0.4), lineWidth: 1)
+                                )
                             }
                             
                             VStack(alignment: .leading, spacing: 16) {
@@ -105,6 +121,7 @@ struct HomeView: View {
                                     Text("차량 종류")
                                         .foregroundColor(.white)
                                         .font(.headline)
+                                        .fontWeight(.heavy)
                                 }
                                 
                                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 16) {
@@ -123,15 +140,19 @@ struct HomeView: View {
                                         Text("추천 매물")
                                             .foregroundColor(.white)
                                             .font(.headline)
+                                            .fontWeight(.heavy)
                                     }
                                     Spacer()
                                     NavigationLink(destination: Text("전체 매물")) {
                                         HStack {
                                             Text("전체보기")
                                                 .foregroundColor(.brandLightOrange)
-                                                .font(.subheadline)
+                                                .font(.system(size: 13))
+                                                .fontWeight(.bold)
                                             Image(systemName: "chevron.right")
                                                 .foregroundColor(.brandLightOrange)
+                                                .font(.system(size: 8))
+                                                .bold()
                                         }
                                     }
                                 }
@@ -165,16 +186,18 @@ struct HomeView: View {
                                             Text("첫 거래 특별 혜택")
                                                 .foregroundColor(.white)
                                                 .font(.caption)
+                                                .fontWeight(.heavy)
                                         }
                                         Text("수수료 50% 할인")
                                             .foregroundColor(.white)
                                             .font(.headline)
+                                            .fontWeight(.heavy)
                                     }
                                     Spacer()
                                     Button(action: {}) {
                                         Text("자세히 보기")
                                             .bold()
-                                            .font(.caption)
+                                            .font(.system(size: 11))
                                             .padding(.horizontal, 12)
                                             .padding(.vertical, 8)
                                             .background(Color.brandOrange)
@@ -200,10 +223,17 @@ struct HomeView: View {
                 if showSlideMenu {
                     Color.black.opacity(0.5)
                         .ignoresSafeArea()
-                        .onTapGesture { showSlideMenu = false }
+                        .onTapGesture {
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    showSlideMenu = false
+                                }
+                            }
+                            .transition(.opacity)
+                            .zIndex(1)
                     
                     SlideMenu(showSlideMenu: $showSlideMenu)
                         .transition(.move(edge: .trailing))
+                        .zIndex(2)        
                 }
             }
         }
@@ -228,6 +258,7 @@ struct CategoryItem: View {
             Text(title)
                 .font(.caption)
                 .foregroundColor(.white)
+                .bold()
         }
     }
 }
@@ -252,9 +283,10 @@ struct FeaturedCard: View {
                     .shadow(radius: 3)
                 
                 Text(badge)
-                    .font(.caption2)
+                    .font(.system(size:8))
                     .bold()
-                    .padding(4)
+                    .padding(.vertical, 4)
+                    .padding(.horizontal,6)
                     .background(badgeColor)
                     .foregroundColor(.white)
                     .cornerRadius(8)
@@ -306,8 +338,12 @@ struct FeaturedCard: View {
             }
         }
         .padding()
-        .background(.ultraThinMaterial)
+        .background(.ultraThinMaterial.opacity(0.2))
         .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.gray.opacity(0.4), lineWidth: 1)
+        )
     }
 }
 
@@ -343,7 +379,11 @@ struct SlideMenu: View {
                         .font(.headline)
                         
                     Spacer()
-                    Button(action: { showSlideMenu = false }) {
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                                showSlideMenu = false
+                            }
+                    }) {
                         Image(systemName: "xmark")
                             .foregroundColor(.white)
                     }
@@ -356,22 +396,24 @@ struct SlideMenu: View {
                             HStack(spacing: 12) {
                                 Image("bannerImage",bundle: nil)
                                     .resizable()
-                                    .frame(width: 48, height: 48)
+                                    .frame(width: 40, height: 40)
                                     .clipShape(Circle())
                                 
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("사용자님")
-                                        .font(.headline)
+                                        .font(.system(size: 14, weight: .heavy))
                                         .foregroundColor(.white)
                                     Text("캠핑카 애호가")
-                                        .font(.subheadline)
+                                        .font(.system(size: 11))
                                         .foregroundColor(.white.opacity(0.6))
                                 }
+                                .padding(.leading, 2)
                             }
+                            .padding(.bottom,1)
                             
                             Button(action: { /* 프로필 화면 이동 */ }) {
                                 Text("프로필 보기")
-                                    .font(.subheadline).bold()
+                                    .font(.system(size: 12, weight:.heavy))
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 8)
                                     .background(Color.brandOrange)
@@ -380,25 +422,38 @@ struct SlideMenu: View {
                             }
                         }
                         .padding()
-                        .background(Color.white.opacity(0.1))
+                        .background(.ultraThinMaterial.opacity(0.2))
                         .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.gray.opacity(0.4), lineWidth: 1)
+                        )
                         .padding(.horizontal)
-                    MenuItem(icon: "car.fill", title: "내 매물", subtitle: "등록한 매물 관리")
-                    MenuItem(icon: "message", title: "채팅", subtitle: "진행중인 대화", badge: "3")
+                    VStack(spacing: 20){
+                        MenuItem(icon: "car.fill", title: "내 매물", subtitle: "등록한 매물 관리")
+                        MenuItem(icon: "message", title: "채팅", subtitle: "진행중인 대화", badge: "3")
+                    }
+                    .padding(10)
+//                    .padding(.top, 20)
+//                    .padding(.horizontal, 10)
+                    
                 }
                 .padding(.top)
                 
-                
-                
+                Spacer()
+ 
                 Button(action: {}) {
                     HStack {
                         Image(systemName: "arrow.backward.square")
+                            .font(.system(size: 13))
                         Text("로그아웃")
+                            .font(.system(size: 13))
                     }
                     .foregroundColor(.red)
                     .padding()
                 }
-                Spacer()
+                .padding(.bottom, 20)
+                
             }
             .frame(width: 280)
             .background(Color(red: 0.043, green: 0.129, blue: 0.102))
@@ -417,35 +472,42 @@ struct MenuItem: View {
         HStack {
             ZStack(alignment: .topTrailing) {
                 Circle()
-                    .fill(.ultraThinMaterial)
-                    .frame(width: 40, height: 40)
+                    .fill(.ultraThinMaterial.opacity(0.2))
+                    .frame(width: 35, height: 35)
                     .overlay(
                         Image(systemName: icon)
+                            .font(.system(size: 13))
                             .foregroundColor(.brandOrange)
                     )
                 
                 if let badge = badge {
                     Text(badge)
-                        .font(.caption2)
+                        .font(.system(size: 9))
                         .bold()
                         .frame(width: 16, height: 16)
                         .background(Color.red)
                         .foregroundColor(.white)
                         .clipShape(Circle())
-                        .offset(x: 8, y: -8)
+                        .offset(x: 2, y: -3)
                 }
             }
             VStack(alignment: .leading) {
                 Text(title)
+                    .font(.system(size: 14, weight: .heavy))
                     .foregroundColor(.white)
+                Spacer()
+                    .frame(height: 2)
                 Text(subtitle)
-                    .font(.caption)
+                    .font(.system(size: 11, weight: .light))
                     .foregroundColor(.white.opacity(0.6))
+                    
             }
             Spacer()
         }
         .padding(.horizontal)
+        
     }
+    
 }
 
 struct HomeView_Previews: PreviewProvider {
