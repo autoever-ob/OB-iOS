@@ -4,15 +4,9 @@
 //
 //  Created by Admin on 9/15/25.
 //
-
 import SwiftUI
 
 public extension Color {
-    static let brandOrange = Color(hex: "#F97316")
-    static let brandLightOrange = Color(hex:"FB923C")
-    static let brandLightGreen = Color(hex: "22C55E")
-    static let brandBackground = Color(hex: "#0B211A")
-    
     /// 헥사코드(예: "0B211A", "#0B211A")로 SwiftUI Color를 생성
     init(hex: String, opacity: Double = 1.0) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
@@ -33,6 +27,4 @@ public extension Color {
                   blue:  Double(b) / 255.0,
                   opacity: opacity)
     }
-    
-    
 }
