@@ -34,3 +34,12 @@ Carthage/
 
 # CocoaPods
 Pods/
+
+# macOS
+.DS_Store
+campick/.DS_Store
+
+# Xcode user-specific
+xcuserdata/
+*.xcuserstate
+DerivedData/
