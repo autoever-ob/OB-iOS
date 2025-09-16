@@ -9,5 +9,7 @@ import Foundation
 import SwiftUI
 
 extension Font {
-    static let basicFont: Font = .custom("Pacifico", size: 32)    
+    static func basicFont(size: CGFloat = 40) -> Font {
+        return .custom("Pacifico", size: size)
+    }
 }
