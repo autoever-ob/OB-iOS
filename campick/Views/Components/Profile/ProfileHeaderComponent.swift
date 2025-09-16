@@ -30,7 +30,7 @@ struct ProfileHeaderComponent: View {
                             .font(.caption)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Color.orange)
+                            .background(AppColors.brandOrange)
                             .foregroundColor(.white)
                             .cornerRadius(8)
                     }
@@ -55,7 +55,7 @@ struct ProfileHeaderComponent: View {
 
 #Preview {
     ZStack {
-        Color(red: 0.043, green: 0.129, blue: 0.102)
+        AppColors.background
             .ignoresSafeArea()
 
         ProfileHeaderComponent(

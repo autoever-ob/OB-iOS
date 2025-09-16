@@ -14,7 +14,7 @@ struct VehicleDescriptionCard: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "text.alignleft")
-                    .foregroundColor(.orange)
+                    .foregroundColor(AppColors.brandOrange)
                 Text("상세 설명")
                     .font(.headline)
                     .fontWeight(.semibold)
@@ -42,7 +42,7 @@ struct VehicleDescriptionCard: View {
 
 #Preview {
     ZStack {
-        Color(red: 0.043, green: 0.129, blue: 0.102)
+        AppColors.background
             .ignoresSafeArea()
 
         VehicleDescriptionCard(

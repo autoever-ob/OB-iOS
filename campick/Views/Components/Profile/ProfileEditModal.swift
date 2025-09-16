@@ -15,7 +15,7 @@ struct ProfileEditModal: View {
 
     var body: some View {
         ZStack {
-            Color(red: 0.043, green: 0.129, blue: 0.102)
+            AppColors.background
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -113,7 +113,7 @@ struct ProfileEditModal: View {
                             .frame(maxWidth: .infinity, minHeight: 48)
                             .background(
                                 LinearGradient(
-                                    colors: [Color.orange, Color.orange.opacity(0.8)],
+                                    colors: [AppColors.brandOrange, AppColors.brandLightOrange],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
