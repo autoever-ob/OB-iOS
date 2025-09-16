@@ -23,6 +23,7 @@ DerivedData/
 *.xcodeproj/xcuserdata/
 *.xcworkspace/xcshareddata/
 *.xcworkspace/xcuserdata/
+*.xcuserstate
 xcuserdata/
 
 # Swift Package Manager
@@ -35,12 +36,6 @@ Carthage/
 # CocoaPods
 Pods/
 
-# macOS
-.DS_Store
-campick/.DS_Store
-
-# Xcode user-specific
-xcuserdata/
-*.xcuserstate
-DerivedData/
+# Editors
+.vscode/
 .idea/
