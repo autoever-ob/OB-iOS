@@ -32,8 +32,12 @@ struct BottomTabBarView: View {
                 TabItems(icon: "heart", label: "찜", active: currentSelection == .favorites)
             }
             Spacer()
-            NavigationLink(destination: Text("프로필")) {
-                TabItems(icon: "person", label: "프로필", active: currentSelection == .profile)
+            if currentSelection == .profile {
+                TabItems(icon: "person", label: "프로필", active: true)
+            } else {
+                NavigationLink(destination: ProfileView(userId: "1", isOwnProfile: true)) {
+                    TabItems(icon: "person", label: "프로필", active: false)
+                }
             }
         }
         .padding(.horizontal)
