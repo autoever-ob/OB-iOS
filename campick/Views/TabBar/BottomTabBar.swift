@@ -20,7 +20,7 @@ struct BottomTabBarView: View {
                 TabItems(icon: "house.fill", label: "홈", active: currentSelection == .home)
             }
             Spacer()
-            NavigationLink(destination: Text("매물찾기")) {
+            NavigationLink(destination: FindVehicleView()) {
                 TabItems(icon: "car", label: "매물찾기", active: currentSelection == .vehicles)
             }
             Spacer()
