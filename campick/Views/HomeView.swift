@@ -13,7 +13,7 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.brandBackground
+                AppColors.brandBackground
                     .ignoresSafeArea()
                 VStack(spacing: 0) {
                     HStack {
@@ -32,12 +32,12 @@ struct HomeView: View {
                             Image(systemName: "person")
                                 .foregroundColor(.white)
                                 .frame(width: 40, height: 40)
-                                .background(Color.brandOrange)
+                                .background(AppColors.brandOrange)
                                 .clipShape(Circle())
                         }
                     }
                     .padding()
-                    .background(Color.brandBackground)
+                    .background(AppColors.brandBackground)
                     
                     ScrollView {
                         VStack(spacing: 24) {
@@ -75,10 +75,10 @@ struct HomeView: View {
                                     HStack {
                                         ZStack {
                                             Circle()
-                                                .fill(Color.brandOrange.opacity(0.2))
+                                                .fill(AppColors.brandOrange.opacity(0.2))
                                                 .frame(width: 48, height: 48)
                                             Image(systemName: "magnifyingglass")
-                                                .foregroundColor(.brandOrange)
+                                                .foregroundColor(AppColors.brandOrange)
                                         }
                                         VStack(alignment: .leading) {
                                             Text("매물 찾기")
@@ -97,7 +97,7 @@ struct HomeView: View {
                                         .bold()
                                         .padding(.vertical, 6)
                                         .padding(.horizontal,8)
-                                        .background(Color.brandOrange)
+                                        .background(AppColors.brandOrange)
                                         .foregroundColor(.white)
                                         .clipShape(Capsule())
                                     Image(systemName: "chevron.right")
@@ -116,7 +116,7 @@ struct HomeView: View {
                             VStack(alignment: .leading, spacing: 16) {
                                 HStack {
                                     Image(systemName: "car.2.fill")
-                                        .foregroundColor(.brandOrange)
+                                        .foregroundColor(AppColors.brandOrange)
                                         .scaledToFill()
                                     Text("차량 종류")
                                         .foregroundColor(.white)
@@ -136,7 +136,7 @@ struct HomeView: View {
                                 HStack {
                                     HStack {
                                         Image(systemName: "star.fill")
-                                            .foregroundColor(.brandOrange)
+                                            .foregroundColor(AppColors.brandOrange)
                                         Text("추천 매물")
                                             .foregroundColor(.white)
                                             .font(.headline)
@@ -146,11 +146,11 @@ struct HomeView: View {
                                     NavigationLink(destination: Text("전체 매물")) {
                                         HStack {
                                             Text("전체보기")
-                                                .foregroundColor(.brandLightOrange)
+                                                .foregroundColor(AppColors.brandLightOrange)
                                                 .font(.system(size: 13))
                                                 .fontWeight(.bold)
                                             Image(systemName: "chevron.right")
-                                                .foregroundColor(.brandLightOrange)
+                                                .foregroundColor(AppColors.brandLightOrange)
                                                 .font(.system(size: 8))
                                                 .bold()
                                         }
@@ -158,8 +158,8 @@ struct HomeView: View {
                                 }
                                 
                                 VStack(spacing: 16) {
-                                    FeaturedCard(image: "testImage1", title: "현대 포레스트", year: "2022년", distance: "15,000km", price: "8,900만원", rating: 4.8, badge: "NEW", badgeColor: .brandLightGreen)
-                                    FeaturedCard(image: "testImage2", title: "기아 봉고 캠퍼", year: "2021년", distance: "32,000km", price: "4,200만원", rating: 4.6, badge: "HOT", badgeColor: .brandOrange)
+                                    FeaturedCard(image: "testImage1", title: "현대 포레스트", year: "2022년", distance: "15,000km", price: "8,900만원", rating: 4.8, badge: "NEW", badgeColor: AppColors.brandLightGreen)
+                                    FeaturedCard(image: "testImage2", title: "기아 봉고 캠퍼", year: "2021년", distance: "32,000km", price: "4,200만원", rating: 4.6, badge: "HOT", badgeColor: AppColors.brandOrange)
                                 }
                             }
                             
@@ -182,7 +182,7 @@ struct HomeView: View {
                                     VStack(alignment: .leading, spacing: 4) {
                                         HStack {
                                             Image(systemName: "flame.fill")
-                                                .foregroundColor(.brandOrange)
+                                                .foregroundColor(AppColors.brandOrange)
                                             Text("첫 거래 특별 혜택")
                                                 .foregroundColor(.white)
                                                 .font(.caption)
@@ -200,7 +200,7 @@ struct HomeView: View {
                                             .font(.system(size: 11))
                                             .padding(.horizontal, 12)
                                             .padding(.vertical, 8)
-                                            .background(Color.brandOrange)
+                                            .background(AppColors.brandOrange)
                                             .foregroundColor(.white)
                                             .clipShape(Capsule())
                                     }
@@ -416,7 +416,7 @@ struct SlideMenu: View {
                                     .font(.system(size: 12, weight:.heavy))
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 8)
-                                    .background(Color.brandOrange)
+                                    .background(AppColors.brandOrange)
                                     .foregroundColor(.white)
                                     .cornerRadius(8)
                             }
@@ -477,7 +477,7 @@ struct MenuItem: View {
                     .overlay(
                         Image(systemName: icon)
                             .font(.system(size: 13))
-                            .foregroundColor(.brandOrange)
+                            .foregroundColor(AppColors.brandOrange)
                     )
                 
                 if let badge = badge {

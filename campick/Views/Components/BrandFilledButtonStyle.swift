@@ -10,7 +10,7 @@ import SwiftUI
 
 struct BrandFilledButtonStyle: ButtonStyle {
     var cornerRadius: CGFloat = 10
-    var fill: Color = .brandOrange
+    var fill: Color = AppColors.brandOrange
     var foreground: Color = .white
 
     @Environment(\.isEnabled) private var isEnabled
