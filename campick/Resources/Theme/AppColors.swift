@@ -12,4 +12,9 @@ enum AppColors {
     static let background = Color(hex: "0B211A")
     /// 기본 텍스트
     static let primaryText = Color.white
+    
+    static let brandOrange = Color(hex: "#F97316")
+    static let brandLightOrange = Color(hex:"FB923C")
+    static let brandLightGreen = Color(hex: "22C55E")
+    static let brandBackground = Color(hex: "#0B211A")
 }

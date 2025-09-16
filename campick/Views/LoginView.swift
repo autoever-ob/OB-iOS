@@ -19,19 +19,8 @@ struct LoginView: View {
                 AppColors.background
                     .ignoresSafeArea()
                 VStack(spacing: 4) {
-                    ZStack {
-                        Text("로그인")
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                        HStack {
-                            Image(systemName: "chevron.left")
-                                .foregroundColor(.white)
-                                .frame(width: 38, height: 38)
-                                .background(Circle().fill(Color.white.opacity(0.1)))
-                                .padding(.leading, 12)
-                            Spacer()
-                        }
+                    TopBarView(title: "로그인") {
+                        // 뒤로가기 액션 정의
                     }
                     .padding(.bottom, 98)
 
@@ -60,7 +49,7 @@ struct LoginView: View {
                                     HStack(spacing: 4) {
                                         Image(systemName: keepLoggedIn ? "checkmark.square.fill" : "square")
                                             .font(.system(size: 20, weight: .semibold))
-                                            .foregroundStyle(keepLoggedIn ? Color.brandOrange : .white.opacity(0.9))
+                                            .foregroundStyle(keepLoggedIn ? AppColors.brandOrange : .white.opacity(0.9))
                                         Text("로그인 유지")
                                             .foregroundStyle(.white)
                                             .font(.subheadline)
@@ -77,7 +66,7 @@ struct LoginView: View {
                                 } label: {
                                     Text("비밀번호 찾기")
                                         .font(Font.subheadline.bold())
-                                        .foregroundStyle(Color.brandOrange)
+                                        .foregroundStyle(AppColors.brandOrange)
                                 }
                             }
                             .padding(.top, 12)
@@ -124,7 +113,7 @@ struct LoginView: View {
                                 } label: {
                                     Text("회원가입")
                                         .font(Font.subheadline.bold())
-                                        .foregroundStyle(Color.brandOrange)
+                                        .foregroundStyle(AppColors.brandOrange)
                                 }
                             }
                             Spacer()

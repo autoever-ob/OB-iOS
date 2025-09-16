@@ -44,7 +44,7 @@ struct OutlinedInputField: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
                         .foregroundStyle(.white)
-                        .tint(.brandOrange)
+                        .tint(AppColors.brandOrange)
                         .font(.body)
                         .frame(height: 22)
                         .opacity(isRevealed ? 1 : 0)
@@ -53,7 +53,7 @@ struct OutlinedInputField: View {
                     SecureField("", text: $text)
                         .textContentType(.password)
                         .foregroundStyle(.white)
-                        .tint(.brandOrange)
+                        .tint(AppColors.brandOrange)
                         .font(.body)
                         .frame(height: 22)
                         .opacity(isRevealed ? 0 : 1)
@@ -64,7 +64,7 @@ struct OutlinedInputField: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
                         .foregroundStyle(.white)
-                        .tint(.brandOrange)
+                        .tint(AppColors.brandOrange)
                 }
             }
             

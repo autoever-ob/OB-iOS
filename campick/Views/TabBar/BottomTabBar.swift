@@ -20,7 +20,7 @@ struct BottomTabBarView: View {
                 TabItems(icon: "house.fill", label: "홈", active: currentSelection == .home)
             }
             Spacer()
-            NavigationLink(destination: Text("매물찾기")) {
+            NavigationLink(destination: FindVehicleView()) {
                 TabItems(icon: "car", label: "매물찾기", active: currentSelection == .vehicles)
             }
             Spacer()
@@ -45,7 +45,7 @@ struct BottomTabBarView: View {
         .padding(.bottom,20)
         .frame(maxWidth: .infinity)
         .background(
-            Color.brandBackground
+            AppColors.brandBackground
                 .ignoresSafeArea(edges: .bottom)
                 .overlay(
                     Rectangle()
@@ -68,10 +68,10 @@ struct TabItems: View {
     var body: some View {
         VStack {
             Image(systemName: icon)
-                .foregroundColor(active ? .brandOrange : .white.opacity(0.6))
+                .foregroundColor(active ? AppColors.brandOrange : .white.opacity(0.6))
             Text(label)
                 .font(.caption2)
-                .foregroundColor(active ? .brandOrange : .white.opacity(0.6))
+                .foregroundColor(active ? AppColors.brandOrange : .white.opacity(0.6))
         }
     }
 }
