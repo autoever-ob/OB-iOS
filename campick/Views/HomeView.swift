@@ -26,7 +26,7 @@ struct HomeView: View {
                         
                         Button(action: {
                             withAnimation(.easeInOut(duration: 0.3)) {
-                                    showSlideMenu.toggle()
+                                    showSlideMenu = true
                                 }
                         }) {
                             Image(systemName: "person")
@@ -224,18 +224,21 @@ struct HomeView: View {
                     Color.black.opacity(0.5)
                         .ignoresSafeArea()
                         .onTapGesture {
-                                withAnimation(.easeInOut(duration: 0.3)) {
-                                    showSlideMenu = false
-                                }
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                showSlideMenu = false
                             }
-                            .transition(.opacity)
-                            .zIndex(1)
-                    
+                        }
+                }
+                
+                // 슬라이드 메뉴
+                HStack {
+                    Spacer()
                     SlideMenu(showSlideMenu: $showSlideMenu)
-                        .transition(.move(edge: .trailing))
-                        .zIndex(2)        
+                        .frame(width: 280)
+                        .offset(x: showSlideMenu ? 0 : 300) // 오른쪽에서 슬라이드
                 }
             }
+            .animation(.easeInOut(duration: 0.3), value: showSlideMenu)
         }
     }
 }
@@ -462,6 +465,8 @@ struct SlideMenu: View {
     }
 }
 
+
+
 struct MenuItem: View {
     var icon: String
     var title: String
@@ -469,42 +474,177 @@ struct MenuItem: View {
     var badge: String? = nil
     
     var body: some View {
-        HStack {
-            ZStack(alignment: .topTrailing) {
-                Circle()
-                    .fill(.ultraThinMaterial.opacity(0.2))
-                    .frame(width: 35, height: 35)
-                    .overlay(
-                        Image(systemName: icon)
-                            .font(.system(size: 13))
-                            .foregroundColor(AppColors.brandOrange)
-                    )
-                
-                if let badge = badge {
-                    Text(badge)
-                        .font(.system(size: 9))
-                        .bold()
-                        .frame(width: 16, height: 16)
-                        .background(Color.red)
-                        .foregroundColor(.white)
-                        .clipShape(Circle())
-                        .offset(x: 2, y: -3)
-                }
-            }
-            VStack(alignment: .leading) {
-                Text(title)
-                    .font(.system(size: 14, weight: .heavy))
-                    .foregroundColor(.white)
-                Spacer()
-                    .frame(height: 2)
-                Text(subtitle)
-                    .font(.system(size: 11, weight: .light))
-                    .foregroundColor(.white.opacity(0.6))
+        NavigationLink(destination: ChatRoomListView(rooms: [
+            ChatRoom(
+                id: "1",
+                sellerId: "seller1",
+                sellerName: "김캠핑",
+                sellerAvatar: "tiffany",
+                vehicleId: "1",
+                vehicleTitle: "현대 포레스트 프리미엄",
+                vehicleImage: "testImage1",
+                lastMessage: "안녕하세요!",
+                lastMessageTime: Date(),
+                unreadCount: 2,
+                isOnline: true
+            ),
+            ChatRoom(
+                id: "2",
+                sellerId: "seller2",
+                sellerName: "박모터홈",
+                sellerAvatar: "mrchu",
+                vehicleId: "2",
+                vehicleTitle: "기아 봉고 캠퍼",
+                vehicleImage: "testImage2",
+                lastMessage: "내일 뵙겠습니다.",
+                lastMessageTime: Date().addingTimeInterval(-3600),
+                unreadCount: 0,
+                isOnline: false
+            )
+            ,
+            ChatRoom(
+                id: "3",
+                sellerId: "seller3",
+                sellerName: "판매자 3",
+                sellerAvatar: "https://randomuser.me/api/portraits/men/3.jpg",
+                vehicleId: "3",
+                vehicleTitle: "캠핑카 모델 3",
+                vehicleImage: "https://picsum.photos/200/120?random=3",
+                lastMessage: "좋은 하루 되세요!",
+                lastMessageTime: Date().addingTimeInterval(-1800),
+                unreadCount: 1,
+                isOnline: true
+            ),
+            ChatRoom(
+                id: "4",
+                sellerId: "seller4",
+                sellerName: "판매자 4",
+                sellerAvatar: "https://randomuser.me/api/portraits/women/4.jpg",
+                vehicleId: "4",
+                vehicleTitle: "캠핑카 모델 4",
+                vehicleImage: "https://picsum.photos/200/120?random=4",
+                lastMessage: "안녕하세요!",
+                lastMessageTime: Date().addingTimeInterval(-2400),
+                unreadCount: 3,
+                isOnline: false
+            ),
+            ChatRoom(
+                id: "5",
+                sellerId: "seller5",
+                sellerName: "판매자 5",
+                sellerAvatar: "https://randomuser.me/api/portraits/men/5.jpg",
+                vehicleId: "5",
+                vehicleTitle: "캠핑카 모델 5",
+                vehicleImage: "https://picsum.photos/200/120?random=5",
+                lastMessage: "내일 뵙겠습니다.",
+                lastMessageTime: Date().addingTimeInterval(-3000),
+                unreadCount: 0,
+                isOnline: true
+            ),
+            ChatRoom(
+                id: "6",
+                sellerId: "seller6",
+                sellerName: "판매자 6",
+                sellerAvatar: "https://randomuser.me/api/portraits/women/6.jpg",
+                vehicleId: "6",
+                vehicleTitle: "캠핑카 모델 6",
+                vehicleImage: "https://picsum.photos/200/120?random=6",
+                lastMessage: "좋은 하루 되세요!",
+                lastMessageTime: Date().addingTimeInterval(-3600),
+                unreadCount: 2,
+                isOnline: false
+            ),
+            ChatRoom(
+                id: "7",
+                sellerId: "seller7",
+                sellerName: "판매자 7",
+                sellerAvatar: "https://randomuser.me/api/portraits/men/7.jpg",
+                vehicleId: "7",
+                vehicleTitle: "캠핑카 모델 7",
+                vehicleImage: "https://picsum.photos/200/120?random=7",
+                lastMessage: "안녕하세요!",
+                lastMessageTime: Date().addingTimeInterval(-4200),
+                unreadCount: 1,
+                isOnline: true
+            ),
+            ChatRoom(
+                id: "8",
+                sellerId: "seller8",
+                sellerName: "판매자 8",
+                sellerAvatar: "https://randomuser.me/api/portraits/women/8.jpg",
+                vehicleId: "8",
+                vehicleTitle: "캠핑카 모델 8",
+                vehicleImage: "https://picsum.photos/200/120?random=8",
+                lastMessage: "내일 뵙겠습니다.",
+                lastMessageTime: Date().addingTimeInterval(-4800),
+                unreadCount: 3,
+                isOnline: false
+            ),
+            ChatRoom(
+                id: "9",
+                sellerId: "seller9",
+                sellerName: "판매자 9",
+                sellerAvatar: "https://randomuser.me/api/portraits/men/9.jpg",
+                vehicleId: "9",
+                vehicleTitle: "캠핑카 모델 9",
+                vehicleImage: "https://picsum.photos/200/120?random=9",
+                lastMessage: "좋은 하루 되세요!",
+                lastMessageTime: Date().addingTimeInterval(-5400),
+                unreadCount: 0,
+                isOnline: true
+            ),
+            ChatRoom(
+                id: "10",
+                sellerId: "seller10",
+                sellerName: "판매자 10",
+                sellerAvatar: "https://randomuser.me/api/portraits/women/10.jpg",
+                vehicleId: "10",
+                vehicleTitle: "캠핑카 모델 10",
+                vehicleImage: "https://picsum.photos/200/120?random=10",
+                lastMessage: "안녕하세요!",
+                lastMessageTime: Date().addingTimeInterval(-6000),
+                unreadCount: 2,
+                isOnline: false
+            ),
+            
+        ])){
+            HStack {
+                ZStack(alignment: .topTrailing) {
+                    Circle()
+                        .fill(.ultraThinMaterial.opacity(0.2))
+                        .frame(width: 35, height: 35)
+                        .overlay(
+                            Image(systemName: icon)
+                                .font(.system(size: 13))
+                                .foregroundColor(AppColors.brandOrange)
+                        )
                     
+                    if let badge = badge {
+                        Text(badge)
+                            .font(.system(size: 9))
+                            .bold()
+                            .frame(width: 16, height: 16)
+                            .background(Color.red)
+                            .foregroundColor(.white)
+                            .clipShape(Circle())
+                            .offset(x: 2, y: -3)
+                    }
+                }
+                VStack(alignment: .leading) {
+                    Text(title)
+                        .font(.system(size: 14, weight: .heavy))
+                        .foregroundColor(.white)
+                    Spacer()
+                        .frame(height: 2)
+                    Text(subtitle)
+                        .font(.system(size: 11, weight: .light))
+                        .foregroundColor(.white.opacity(0.6))
+                        
+                }
+                Spacer()
             }
-            Spacer()
+            .padding(.horizontal)
         }
-        .padding(.horizontal)
         
     }
     
