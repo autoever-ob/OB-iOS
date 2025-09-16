@@ -23,6 +23,7 @@ DerivedData/
 *.xcodeproj/xcuserdata/
 *.xcworkspace/xcshareddata/
 *.xcworkspace/xcuserdata/
+*.xcuserstate
 xcuserdata/
 
 # Swift Package Manager
@@ -34,3 +35,8 @@ Carthage/
 
 # CocoaPods
 Pods/
+
+# JetBrain
+.idea/
+
+
