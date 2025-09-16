@@ -11,7 +11,7 @@ struct FindVehicleView: View {
     @State private var query: String = ""
     @State private var selectedBrands: Set<String> = ["전체"]
 
-    let brands = ["전체", "현대", "기아", "BMW", "Benz", "도요타", "쌍용", "포드", "쉐보레", "지프", "혼다"]
+    let vehicleType = ["전체", "모터홈", "트레일러", "픽업캠퍼", "캠핑밴"]
     
     // Mock pools for placeholder generation
     private let prices = ["2,900만원","3,850만원","4,500만원","5,200만원"]
@@ -62,7 +62,7 @@ struct FindVehicleView: View {
                     // 자동차 브랜드 선택
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 12) {
-                            ForEach(brands, id: \.self) { brand in
+                            ForEach(vehicleType, id: \.self) { brand in
                                 Chip(title: brand,
                                      isSelected: selectedBrands.contains(brand)) {
                                     if brand == "전체" {
