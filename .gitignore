@@ -36,8 +36,8 @@ Carthage/
 # CocoaPods
 Pods/
 
-# JetBrain
+# Editors
+.vscode/
 .idea/
-
 
 .DS_Store
