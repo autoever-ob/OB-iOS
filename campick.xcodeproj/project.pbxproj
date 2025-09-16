@@ -10,9 +10,22 @@
 		8463C3BA2E77B055006379CA /* campick.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = campick.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		841755BA2E794AA800E17BEB /* Exceptions for "campick" folder in "campick" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 8463C3B92E77B055006379CA /* campick */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		8463C3BC2E77B055006379CA /* campick */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				841755BA2E794AA800E17BEB /* Exceptions for "campick" folder in "campick" target */,
+			);
 			path = campick;
 			sourceTree = "<group>";
 		};
