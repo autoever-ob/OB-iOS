@@ -237,6 +237,8 @@ struct HomeView: View {
                 }
             }
         }
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
     }
 }
 
