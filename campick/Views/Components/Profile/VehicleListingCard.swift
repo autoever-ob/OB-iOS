@@ -39,7 +39,7 @@ struct VehicleListingCardProfile: View {
                     .font(.system(size: 15, weight: .semibold))
                     .lineLimit(1)
 
-                Text(listing.price)
+                Text("\(listing.price)만원")
                     .foregroundColor(AppColors.brandOrange)
                     .font(.system(size: 17, weight: .bold))
 
@@ -49,7 +49,8 @@ struct VehicleListingCardProfile: View {
                             .foregroundColor(.white.opacity(0.6))
                             .font(.system(size: 10))
 
-                        Text(listing.year)
+
+                        Text("\(String(listing.year))년")
                             .foregroundColor(.white.opacity(0.6))
                             .font(.system(size: 13))
                     }
@@ -59,7 +60,7 @@ struct VehicleListingCardProfile: View {
                             .foregroundColor(.white.opacity(0.6))
                             .font(.system(size: 10))
 
-                        Text(listing.mileage)
+                        Text("\(listing.mileage)km")
                             .foregroundColor(.white.opacity(0.6))
                             .font(.system(size: 13))
                     }

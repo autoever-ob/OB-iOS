@@ -23,7 +23,7 @@ struct VehicleFeaturesCard: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "gearshape")
-                    .foregroundColor(.orange)
+                    .foregroundColor(AppColors.brandOrange)
                 Text("주요 옵션")
                     .font(.headline)
                     .fontWeight(.semibold)
@@ -44,10 +44,10 @@ struct VehicleFeaturesCard: View {
                             Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                                 .font(.system(size: 10))
                         }
-                        .foregroundColor(.orange)
+                        .foregroundColor(AppColors.brandOrange)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Color.orange.opacity(0.1))
+                        .background(AppColors.brandOrange.opacity(0.1))
                         .clipShape(Capsule())
                     }
                 }
@@ -83,7 +83,7 @@ struct VehicleFeaturesCard: View {
 
 #Preview {
     ZStack {
-        Color(red: 0.043, green: 0.129, blue: 0.102)
+        AppColors.background
             .ignoresSafeArea()
 
         VehicleFeaturesCard(

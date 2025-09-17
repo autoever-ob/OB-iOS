@@ -12,34 +12,36 @@ struct ProfileAvatarSection: View {
 
     var body: some View {
         HStack(spacing: 16) {
-            // Avatar
-            AsyncImage(url: URL(string: userProfile.avatar)) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                Color.gray.opacity(0.3)
+            // Avatar with Dealer Badge
+            ZStack(alignment: .bottomTrailing) {
+                AsyncImage(url: URL(string: userProfile.avatar)) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    Color.gray.opacity(0.3)
+                }
+                .frame(width: 64, height: 64)
+                .clipShape(Circle())
+
+                // Dealer Badge on bottom right
+                if userProfile.isDealer {
+                    Text("딜러")
+                        .foregroundColor(.white)
+                        .font(.system(size: 9, weight: .bold))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(AppColors.brandOrange)
+                        .clipShape(Capsule())
+                        .offset(x: 5, y: 5)
+                }
             }
-            .frame(width: 64, height: 64)
-            .clipShape(Circle())
 
             VStack(alignment: .leading, spacing: 8) {
-                // Name and Dealer Badge
-                HStack(spacing: 8) {
-                    Text(userProfile.name)
-                        .foregroundColor(.white)
-                        .font(.system(size: 18, weight: .bold))
-
-                    if userProfile.isDealer {
-                        Text("딜러")
-                            .foregroundColor(.white)
-                            .font(.system(size: 11, weight: .medium))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.orange)
-                            .clipShape(Capsule())
-                    }
-                }
+                // Name
+                Text(userProfile.name)
+                    .foregroundColor(.white)
+                    .font(.system(size: 18, weight: .bold))
 
                 // Rating
                 HStack(spacing: 4) {
