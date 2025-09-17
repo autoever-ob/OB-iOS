@@ -8,23 +8,24 @@
 import Foundation
 import SwiftUI
 
-
-
 struct OutlinedInputField: View {
     @Binding var text: String
     let placeholder: String
     let systemImage: String?
     var isSecure: Bool = false
     @State private var isRevealed: Bool = false
+    var keyboardType: UIKeyboardType? = nil
     
     init(text: Binding<String>,
              placeholder: String,
              systemImage: String? = nil,
-             isSecure: Bool = false) {
+             isSecure: Bool = false,
+             keyboardType: UIKeyboardType? = nil) {
             self._text = text
             self.placeholder = placeholder
             self.systemImage = systemImage
             self.isSecure = isSecure
+            self.keyboardType = keyboardType
         }
 
     
@@ -38,7 +39,6 @@ struct OutlinedInputField: View {
                 }
                 
                 if isSecure {
-                    // Overlapped fields to avoid size changes when toggling visibility
                     TextField("", text: $text)
                         .textContentType(.password)
                         .textInputAutocapitalization(.never)
@@ -60,7 +60,7 @@ struct OutlinedInputField: View {
                         .allowsHitTesting(!isRevealed)
                 } else {
                     TextField("", text: $text)
-                        .keyboardType(.emailAddress)
+                        .keyboardType(keyboardType ?? .emailAddress)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
                         .foregroundStyle(.white)
@@ -87,5 +87,32 @@ struct OutlinedInputField: View {
             RoundedRectangle(cornerRadius: 10)
                 .stroke(Color.white.opacity(0.2), lineWidth: 1)
         )
+    }
+}
+
+#Preview("OutlinedInputField – All Variants") {
+    @Previewable @State var email: String = ""
+    @Previewable @State var password: String = ""
+
+    ZStack {
+        AppColors.brandBackground.ignoresSafeArea()
+        VStack(spacing: 16) {
+            // Email field with icon
+            OutlinedInputField(
+                text: $email,
+                placeholder: "이메일을 입력하세요",
+                systemImage: "envelope",
+                isSecure: false
+            )
+
+            // Password secure field
+            OutlinedInputField(
+                text: $password,
+                placeholder: "비밀번호를 입력하세요",
+                systemImage: nil,
+                isSecure: true
+            )
+        }
+        .padding()
     }
 }
