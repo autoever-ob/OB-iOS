@@ -22,7 +22,11 @@ struct ChatRoom: Identifiable,Hashable {
 }
 
 struct ChatRoomListView: View {
-    let rooms: [ChatRoom]
+    @State private var rooms: [ChatRoom]
+    @State private var selectedRoom: ChatRoom?
+    init(rooms: [ChatRoom]) {
+        _rooms = State(initialValue: rooms)
+    }
     
     
     
@@ -63,31 +67,43 @@ struct ChatRoomListView: View {
                     }
                     .frame(maxHeight: .infinity)
                 } else {
-                    ScrollView {
-                        LazyVStack(spacing: 12) {
-                            ForEach(rooms) { room in
-                                NavigationLink(value: room) {
-                                    ChatRoomRow(room: room)
+                    List {
+                        ForEach(rooms) { room in
+                            ChatRoomRow(room: room)
+//                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    selectedRoom = room
                                 }
-                            }
+                                .listRowInsets(EdgeInsets())
+                                .listRowSeparator(.hidden)
+                                .listRowBackground(Color.clear)
+                                .padding(.bottom,10)
                         }
-                        
+                        .onDelete {indexSet in
+                            rooms.remove(atOffsets: indexSet)
+                        }
                     }
-                    .padding(.horizontal)
+                    .padding()
+                    .listStyle(.plain)
+                    .navigationDestination(item: $selectedRoom) { room in
+                        ChatView(sellerName: room.sellerName, sellerAvatar: room.sellerAvatar)
+                    }
+                    
                 }
             }
             .background(AppColors.brandBackground)
-            .navigationTitle("채팅")
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: ChatRoom.self) { room in
                 ChatView(sellerName: room.sellerName, sellerAvatar: room.sellerAvatar)
             }
-            .safeAreaInset(edge: .bottom) {
-                BottomTabBarView(currentSelection: .home)
-            }
         }
+        
+//        .safeAreaInset(edge: .bottom) {
+//            BottomTabBarView(currentSelection: .home)
+//        }
     }
 }
+
 
 struct ChatRoomRow: View {
     let room: ChatRoom
@@ -182,12 +198,12 @@ struct ChatRoomRow: View {
         ChatRoom(
             id: "1",
             sellerId: "seller1",
-            sellerName: "김캠핑",
+            sellerName: "티파니 갱",
             sellerAvatar: "tiffany",
             vehicleId: "1",
             vehicleTitle: "현대 포레스트 프리미엄",
             vehicleImage: "testImage1",
-            lastMessage: "안녕하세요!",
+            lastMessage: "Fuck u bitch",
             lastMessageTime: Date(),
             unreadCount: 2,
             isOnline: true
@@ -195,12 +211,12 @@ struct ChatRoomRow: View {
         ChatRoom(
             id: "2",
             sellerId: "seller2",
-            sellerName: "박모터홈",
+            sellerName: "느창우",
             sellerAvatar: "mrchu",
             vehicleId: "2",
             vehicleTitle: "기아 봉고 캠퍼",
             vehicleImage: "testImage2",
-            lastMessage: "내일 뵙겠습니다.",
+            lastMessage: "야시장에서 뵙겠습니다.",
             lastMessageTime: Date().addingTimeInterval(-3600),
             unreadCount: 0,
             isOnline: false
@@ -209,12 +225,12 @@ struct ChatRoomRow: View {
         ChatRoom(
             id: "3",
             sellerId: "seller3",
-            sellerName: "판매자 3",
-            sellerAvatar: "https://randomuser.me/api/portraits/men/3.jpg",
+            sellerName: "박우진",
+            sellerAvatar: "park",
             vehicleId: "3",
-            vehicleTitle: "캠핑카 모델 3",
-            vehicleImage: "https://picsum.photos/200/120?random=3",
-            lastMessage: "좋은 하루 되세요!",
+            vehicleTitle: "기아 봉고 캠퍼",
+            vehicleImage: "testImage2",
+            lastMessage: "창우 가면 가!",
             lastMessageTime: Date().addingTimeInterval(-1800),
             unreadCount: 1,
             isOnline: true
@@ -222,94 +238,18 @@ struct ChatRoomRow: View {
         ChatRoom(
             id: "4",
             sellerId: "seller4",
-            sellerName: "판매자 4",
-            sellerAvatar: "https://randomuser.me/api/portraits/women/4.jpg",
+            sellerName: "崔东进",
+            sellerAvatar: "choi",
             vehicleId: "4",
-            vehicleTitle: "캠핑카 모델 4",
-            vehicleImage: "https://picsum.photos/200/120?random=4",
-            lastMessage: "안녕하세요!",
+            vehicleTitle: "현대 포레스트 프리미엄",
+            vehicleImage: "testImage1",
+            lastMessage: "这辆车多少钱",
             lastMessageTime: Date().addingTimeInterval(-2400),
             unreadCount: 3,
             isOnline: false
         ),
-        ChatRoom(
-            id: "5",
-            sellerId: "seller5",
-            sellerName: "판매자 5",
-            sellerAvatar: "https://randomuser.me/api/portraits/men/5.jpg",
-            vehicleId: "5",
-            vehicleTitle: "캠핑카 모델 5",
-            vehicleImage: "https://picsum.photos/200/120?random=5",
-            lastMessage: "내일 뵙겠습니다.",
-            lastMessageTime: Date().addingTimeInterval(-3000),
-            unreadCount: 0,
-            isOnline: true
-        ),
-        ChatRoom(
-            id: "6",
-            sellerId: "seller6",
-            sellerName: "판매자 6",
-            sellerAvatar: "https://randomuser.me/api/portraits/women/6.jpg",
-            vehicleId: "6",
-            vehicleTitle: "캠핑카 모델 6",
-            vehicleImage: "https://picsum.photos/200/120?random=6",
-            lastMessage: "좋은 하루 되세요!",
-            lastMessageTime: Date().addingTimeInterval(-3600),
-            unreadCount: 2,
-            isOnline: false
-        ),
-        ChatRoom(
-            id: "7",
-            sellerId: "seller7",
-            sellerName: "판매자 7",
-            sellerAvatar: "https://randomuser.me/api/portraits/men/7.jpg",
-            vehicleId: "7",
-            vehicleTitle: "캠핑카 모델 7",
-            vehicleImage: "https://picsum.photos/200/120?random=7",
-            lastMessage: "안녕하세요!",
-            lastMessageTime: Date().addingTimeInterval(-4200),
-            unreadCount: 1,
-            isOnline: true
-        ),
-        ChatRoom(
-            id: "8",
-            sellerId: "seller8",
-            sellerName: "판매자 8",
-            sellerAvatar: "https://randomuser.me/api/portraits/women/8.jpg",
-            vehicleId: "8",
-            vehicleTitle: "캠핑카 모델 8",
-            vehicleImage: "https://picsum.photos/200/120?random=8",
-            lastMessage: "내일 뵙겠습니다.",
-            lastMessageTime: Date().addingTimeInterval(-4800),
-            unreadCount: 3,
-            isOnline: false
-        ),
-        ChatRoom(
-            id: "9",
-            sellerId: "seller9",
-            sellerName: "판매자 9",
-            sellerAvatar: "https://randomuser.me/api/portraits/men/9.jpg",
-            vehicleId: "9",
-            vehicleTitle: "캠핑카 모델 9",
-            vehicleImage: "https://picsum.photos/200/120?random=9",
-            lastMessage: "좋은 하루 되세요!",
-            lastMessageTime: Date().addingTimeInterval(-5400),
-            unreadCount: 0,
-            isOnline: true
-        ),
-        ChatRoom(
-            id: "10",
-            sellerId: "seller10",
-            sellerName: "판매자 10",
-            sellerAvatar: "https://randomuser.me/api/portraits/women/10.jpg",
-            vehicleId: "10",
-            vehicleTitle: "캠핑카 모델 10",
-            vehicleImage: "https://picsum.photos/200/120?random=10",
-            lastMessage: "안녕하세요!",
-            lastMessageTime: Date().addingTimeInterval(-6000),
-            unreadCount: 2,
-            isOnline: false
-        ),
+        
+        
         
     ])
 }
