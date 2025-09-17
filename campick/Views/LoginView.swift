@@ -74,11 +74,13 @@ struct LoginView: View {
                             .padding(.horizontal, 2)
 
                             // 로그인 버튼
-                            Button("로그인") {
+                            PrimaryActionButton(
+                                title: "로그인",
+                                titleFont: .system(size: 18, weight: .bold),
+                                isDisabled: email.isEmpty || password.isEmpty,
+                            ) {
                                 goHome = true
                             }
-                            .buttonStyle(BrandFilledButtonStyle())
-                            .disabled(email.isEmpty || password.isEmpty)
                             .navigationDestination(isPresented: $goHome) {
                                 HomeView()
                             }
@@ -133,3 +135,4 @@ struct LoginView_Previews: PreviewProvider {
         LoginView()
     }
 }
+
