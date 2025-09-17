@@ -86,7 +86,10 @@ struct ChatRoomListView: View {
                     .padding()
                     .listStyle(.plain)
                     .navigationDestination(item: $selectedRoom) { room in
-                        ChatView(sellerName: room.sellerName, sellerAvatar: room.sellerAvatar)
+                        ChatView(
+                            seller: ChatSeller(id: "1", name: "박우진", avatar: "tiffany", isOnline: true, lastSeen: Date(),phoneNumber: "010-1234-1234"),
+                            vehicle: ChatVehicle(id: "1", title: "현대 포레스트 프리미엄", price: 8900, status: "판매중", image: "https://picsum.photos/200/120?random=3")
+                        )
                     }
                     
                 }
@@ -94,7 +97,7 @@ struct ChatRoomListView: View {
             .background(AppColors.brandBackground)
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: ChatRoom.self) { room in
-                ChatView(sellerName: room.sellerName, sellerAvatar: room.sellerAvatar)
+//                ChatView(sellerName: room.sellerName, sellerAvatar: room.sellerAvatar)
             }
         }
         

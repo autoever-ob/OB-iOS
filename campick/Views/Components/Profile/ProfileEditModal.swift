@@ -294,7 +294,7 @@ struct PhoneFormField: View {
                 .padding(12)
                 .background(Color.gray.opacity(0.3))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
-                .onChange(of: text) { newValue in
+                .onChange(of: text) { oldValue ,newValue in
                     // 숫자만 허용하고 자동으로 하이픈 추가
                     let filtered = newValue.filter { $0.isNumber }
 
