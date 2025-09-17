@@ -22,16 +22,63 @@ struct ChatRoom: Identifiable,Hashable {
 }
 
 struct ChatRoomListView: View {
-    @State private var rooms: [ChatRoom]
+    
     @State private var selectedRoom: ChatRoom?
-    init(rooms: [ChatRoom]) {
-        _rooms = State(initialValue: rooms)
-    }
-    
-    
-    
+    @State private var rooms: [ChatRoom] = [
+        ChatRoom(
+            id: "1",
+            sellerId: "seller1",
+            sellerName: "티파니 갱",
+            sellerAvatar: "tiffany",
+            vehicleId: "1",
+            vehicleTitle: "현대 포레스트 프리미엄",
+            vehicleImage: "testImage1",
+            lastMessage: "Fuck u bitch",
+            lastMessageTime: Date(),
+            unreadCount: 2,
+            isOnline: true
+        ),
+        ChatRoom(
+            id: "2",
+            sellerId: "seller2",
+            sellerName: "느창우",
+            sellerAvatar: "mrchu",
+            vehicleId: "2",
+            vehicleTitle: "기아 봉고 캠퍼",
+            vehicleImage: "testImage2",
+            lastMessage: "야시장에서 뵙겠습니다.",
+            lastMessageTime: Date().addingTimeInterval(-3600),
+            unreadCount: 0,
+            isOnline: false
+        ),
+        ChatRoom(
+            id: "3",
+            sellerId: "seller3",
+            sellerName: "박우진",
+            sellerAvatar: "park",
+            vehicleId: "3",
+            vehicleTitle: "기아 봉고 캠퍼",
+            vehicleImage: "testImage2",
+            lastMessage: "창우 가면 가!",
+            lastMessageTime: Date().addingTimeInterval(-1800),
+            unreadCount: 1,
+            isOnline: true
+        ),
+        ChatRoom(
+            id: "4",
+            sellerId: "seller4",
+            sellerName: "崔东进",
+            sellerAvatar: "choi",
+            vehicleId: "4",
+            vehicleTitle: "현대 포레스트 프리미엄",
+            vehicleImage: "testImage1",
+            lastMessage: "这辆车多少钱",
+            lastMessageTime: Date().addingTimeInterval(-2400),
+            unreadCount: 3,
+            isOnline: false
+        )
+    ]
     var body: some View {
-        NavigationStack {
             VStack(alignment: .center) {
                 if rooms.isEmpty {
                     VStack {
@@ -70,7 +117,7 @@ struct ChatRoomListView: View {
                     List {
                         ForEach(rooms) { room in
                             ChatRoomRow(room: room)
-//                                .contentShape(Rectangle())
+                            //                                .contentShape(Rectangle())
                                 .onTapGesture {
                                     selectedRoom = room
                                 }
@@ -98,15 +145,15 @@ struct ChatRoomListView: View {
             }
             .background(AppColors.brandBackground)
             .navigationBarTitleDisplayMode(.inline)
-            .navigationDestination(for: ChatRoom.self) { room in
-//                ChatView(sellerName: room.sellerName, sellerAvatar: room.sellerAvatar)
-            }
+            //            .navigationDestination(for: ChatRoom.self) { room in
+            //                ChatView(sellerName: room.sellerName, sellerAvatar: room.sellerAvatar)
+            //            }
         }
         
-//        .safeAreaInset(edge: .bottom) {
-//            BottomTabBarView(currentSelection: .home)
-//        }
-    }
+        //        .safeAreaInset(edge: .bottom) {
+        //            BottomTabBarView(currentSelection: .home)
+        //        }
+    
 }
 
 
@@ -199,62 +246,5 @@ struct ChatRoomRow: View {
 
 
 #Preview {
-    ChatRoomListView(rooms: [
-        ChatRoom(
-            id: "1",
-            sellerId: "seller1",
-            sellerName: "티파니 갱",
-            sellerAvatar: "tiffany",
-            vehicleId: "1",
-            vehicleTitle: "현대 포레스트 프리미엄",
-            vehicleImage: "testImage1",
-            lastMessage: "Fuck u bitch",
-            lastMessageTime: Date(),
-            unreadCount: 2,
-            isOnline: true
-        ),
-        ChatRoom(
-            id: "2",
-            sellerId: "seller2",
-            sellerName: "느창우",
-            sellerAvatar: "mrchu",
-            vehicleId: "2",
-            vehicleTitle: "기아 봉고 캠퍼",
-            vehicleImage: "testImage2",
-            lastMessage: "야시장에서 뵙겠습니다.",
-            lastMessageTime: Date().addingTimeInterval(-3600),
-            unreadCount: 0,
-            isOnline: false
-        )
-        ,
-        ChatRoom(
-            id: "3",
-            sellerId: "seller3",
-            sellerName: "박우진",
-            sellerAvatar: "park",
-            vehicleId: "3",
-            vehicleTitle: "기아 봉고 캠퍼",
-            vehicleImage: "testImage2",
-            lastMessage: "창우 가면 가!",
-            lastMessageTime: Date().addingTimeInterval(-1800),
-            unreadCount: 1,
-            isOnline: true
-        ),
-        ChatRoom(
-            id: "4",
-            sellerId: "seller4",
-            sellerName: "崔东进",
-            sellerAvatar: "choi",
-            vehicleId: "4",
-            vehicleTitle: "현대 포레스트 프리미엄",
-            vehicleImage: "testImage1",
-            lastMessage: "这辆车多少钱",
-            lastMessageTime: Date().addingTimeInterval(-2400),
-            unreadCount: 3,
-            isOnline: false
-        ),
-        
-        
-        
-    ])
+    ChatRoomListView()
 }

@@ -89,8 +89,11 @@ private struct ViewOffsetKey: PreferenceKey {
 struct ChatView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
+    
+    
     let seller: ChatSeller
     let vehicle: ChatVehicle
+    var onBack: (() -> Void)? = nil
     
     @State private var messages: [ChatMessage] = [
         ChatMessage(id: "1", text: "안녕하세요! 현대 포레스트 프리미엄 매물에 관심을 가져주셔서 감사합니다.", timestamp: Date().addingTimeInterval(-30), isMyMessage: false, type: .text),
