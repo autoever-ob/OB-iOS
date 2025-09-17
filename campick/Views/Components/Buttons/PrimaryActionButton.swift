@@ -13,7 +13,7 @@ struct PrimaryActionButton: View {
     var isDisabled: Bool = false
     var systemImage: String? = nil
     var width: CGFloat? = nil
-    var height: CGFloat? = 48
+    var height: CGFloat? = 30
     var cornerRadius: CGFloat = 10
     var fill: Color = AppColors.brandOrange
     var foreground: Color = .white
