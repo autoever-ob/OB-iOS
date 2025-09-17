@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct VehicleListingsCompact: View {
-    let listings: [VehicleListing]
+    let listings: [Vehicle]
     let isOwnProfile: Bool
 
     var body: some View {
