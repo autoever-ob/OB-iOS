@@ -435,8 +435,8 @@ struct SlideMenu: View {
                         )
                         .padding(.horizontal)
                     VStack(spacing: 20){
-                        MenuItem(icon: "car.fill", title: "내 매물", subtitle: "등록한 매물 관리")
-                        MenuItem(icon: "message", title: "채팅", subtitle: "진행중인 대화", badge: "3")
+                        MenuItem(icon: "car.fill", title: "내 매물", subtitle: "등록한 매물 관리", destination: AnyView(Text("내 매물")))
+                        MenuItem(icon: "message", title: "채팅", subtitle: "진행중인 대화", badge: "3", destination: AnyView(ChatRoomListView()))
                     }
                     .padding(10)
 //                    .padding(.top, 20)
@@ -474,9 +474,10 @@ struct MenuItem: View {
     var title: String
     var subtitle: String
     var badge: String? = nil
+    var destination: AnyView
     
     var body: some View {
-        NavigationLink(destination: ChatRoomListView()){
+        NavigationLink(destination: destination){
             HStack {
                 ZStack(alignment: .topTrailing) {
                     Circle()
