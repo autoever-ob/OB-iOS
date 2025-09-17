@@ -88,6 +88,7 @@ private struct ViewOffsetKey: PreferenceKey {
 
 struct ChatView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     let seller: ChatSeller
     let vehicle: ChatVehicle
     
@@ -106,6 +107,7 @@ struct ChatView: View {
     @State private var isTyping: Bool = false
     @State private var isAtBottom: Bool = true
     @State private var didEnterInitially = false
+    @State private var showCallAlert = false
     private let bottomThreshold: CGFloat = 40
 
     var body: some View {
@@ -146,15 +148,15 @@ struct ChatView: View {
                     
                     HStack(spacing: 12) {
                         Button {
-                            // 누르면 통화하기 나오게
+                            callSeller()
                         } label: {
                             Image(systemName: "phone")
                                 .foregroundColor(.white)
                                 .padding(10)
                                 .background(Color.white.opacity(0.1))
                                 .clipShape(Circle())
-                            
                         }
+                        .disabled(URL(string: "tel://\(seller.phoneNumber)") == nil)
                     }
                 }
                 .padding()
@@ -392,6 +394,9 @@ struct ChatView: View {
                     )
             )
         }
+        .alert("실기기에서만 동작합니다", isPresented: $showCallAlert) {
+            Button("확인", role: .cancel) { }
+        }
         .ignoresSafeArea(edges: .bottom)
     }
     
@@ -409,6 +414,16 @@ struct ChatView: View {
             messages.append(response)
             isTyping = false
         }
+    }
+    
+    private func callSeller() {
+        let rawNumber = seller.phoneNumber.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let url = URL(string: "tel://\(rawNumber)") else { return }
+    #if targetEnvironment(simulator)
+        showCallAlert = true
+    #else
+        openURL(url)
+    #endif
     }
     
     private func formatTime(_ date: Date) -> String {
