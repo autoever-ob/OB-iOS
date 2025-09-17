@@ -240,6 +240,8 @@ struct HomeView: View {
             }
             .animation(.easeInOut(duration: 0.3), value: showSlideMenu)
         }
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
     }
 }
 
