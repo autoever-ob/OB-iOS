@@ -10,13 +10,13 @@ import SwiftUI
 struct PrimaryActionButton: View {
     var title: String
     var titleFont: Font = .headline
-    var isDisabled: Bool = false
     var systemImage: String? = nil
     var width: CGFloat? = nil
     var height: CGFloat? = 30
     var cornerRadius: CGFloat = 10
     var fill: Color = AppColors.brandOrange
     var foreground: Color = .white
+    var isDisabled: Bool = false
     
 
     // MARK: Action
@@ -47,10 +47,29 @@ struct PrimaryActionButton: View {
 
 #Preview("PrimaryActionButton Variants") {
     VStack(spacing: 16) {
-        PrimaryActionButton(title: "로그인") { }
-        PrimaryActionButton(title: "다음", systemImage: "arrow.right", height: 52) { }
-        PrimaryActionButton(title: "확인", isDisabled: true, width: 200, height: 44) { }
-        PrimaryActionButton(title: "커스텀", width: 220, cornerRadius: 14, fill: .blue, foreground: .white) { }
+        PrimaryActionButton(
+            title: "로그인"
+        ) { }
+        
+        PrimaryActionButton(
+            title: "다음",
+            systemImage: "arrow.right",
+            height: 52)
+        { }
+        
+        PrimaryActionButton(
+            title: "확인",
+            width: 200,
+            height: 44,
+            isDisabled: true,
+        ) { }
+        
+        PrimaryActionButton(
+            title: "커스텀",
+            width: 220,
+            cornerRadius: 14,
+            fill: .blue,
+            foreground: .white) { }
     }
     .padding()
     .background(AppColors.background)
