@@ -12,7 +12,8 @@ struct VehicleListingCardProfile: View {
     let isOwnProfile: Bool
 
     var body: some View {
-        HStack(spacing: 12) {
+        NavigationLink(destination: VehicleDetailView(vehicleId: listing.id)) {
+            HStack(spacing: 12) {
             ZStack(alignment: .topLeading) {
                 Image("bannerImage")
                     .resizable()
@@ -87,9 +88,11 @@ struct VehicleListingCardProfile: View {
                     .foregroundColor(.white.opacity(0.4))
                     .font(.system(size: 14))
             }
+            }
+            .padding(12)
+            .background(Color.white.opacity(0.05))
+            .cornerRadius(10)
         }
-        .padding(12)
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(10)
+        .buttonStyle(PlainButtonStyle())
     }
 }
