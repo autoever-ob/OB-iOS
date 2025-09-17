@@ -1,23 +1,11 @@
 //
-//  VehicleListing.swift
+//  Vehicle.swift
 //  campick
 //
-//  Created by 김호집 on 9/16/25.
+//  Created by Admin on 9/16/25.
 //
 
 import SwiftUI
-
-struct VehicleListing {
-    let id: String
-    let title: String
-    let image: String
-    let price: Int
-    let year: Int
-    let mileage: Int
-    let status: VehicleStatus
-    let location: String
-    let postedDate: String
-}
 
 enum VehicleStatus: String, CaseIterable {
     case active = "active"
@@ -39,4 +27,25 @@ enum VehicleStatus: String, CaseIterable {
         case .sold: return .gray
         }
     }
+}
+
+struct Vehicle: Identifiable {
+    let id: String
+    // Images
+    let imageName: String?
+    let thumbnailURL: URL?
+    // Basics
+    let title: String
+    let price: String
+    let year: String
+    let mileage: String
+    let fuelType: String
+    let transmission: String
+    let location: String
+    // Status
+    let status: VehicleStatus
+    let postedDate: String?
+    // Flags
+    let isOnSale: Bool
+    let isFavorite: Bool
 }
