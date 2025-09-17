@@ -18,7 +18,7 @@ struct HomeView: View {
                 VStack(spacing: 0) {
                     HStack {
                         Text("Campick")
-                            .font(.custom("Pacifico", size: 24))
+                            .font(.custom("Pacifico", size: 30))
                             .foregroundColor(.white)
                             .shadow(radius: 2)
                         
@@ -26,7 +26,7 @@ struct HomeView: View {
                         
                         Button(action: {
                             withAnimation(.easeInOut(duration: 0.3)) {
-                                    showSlideMenu.toggle()
+                                    showSlideMenu = true
                                 }
                         }) {
                             Image(systemName: "person")
@@ -224,18 +224,21 @@ struct HomeView: View {
                     Color.black.opacity(0.5)
                         .ignoresSafeArea()
                         .onTapGesture {
-                                withAnimation(.easeInOut(duration: 0.3)) {
-                                    showSlideMenu = false
-                                }
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                showSlideMenu = false
                             }
-                            .transition(.opacity)
-                            .zIndex(1)
-                    
+                        }
+                }
+                
+                // 슬라이드 메뉴
+                HStack {
+                    Spacer()
                     SlideMenu(showSlideMenu: $showSlideMenu)
-                        .transition(.move(edge: .trailing))
-                        .zIndex(2)        
+                        .frame(width: 280)
+                        .offset(x: showSlideMenu ? 0 : 300) // 오른쪽에서 슬라이드
                 }
             }
+            .animation(.easeInOut(duration: 0.3), value: showSlideMenu)
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
@@ -464,6 +467,8 @@ struct SlideMenu: View {
     }
 }
 
+
+
 struct MenuItem: View {
     var icon: String
     var title: String
@@ -471,42 +476,44 @@ struct MenuItem: View {
     var badge: String? = nil
     
     var body: some View {
-        HStack {
-            ZStack(alignment: .topTrailing) {
-                Circle()
-                    .fill(.ultraThinMaterial.opacity(0.2))
-                    .frame(width: 35, height: 35)
-                    .overlay(
-                        Image(systemName: icon)
-                            .font(.system(size: 13))
-                            .foregroundColor(AppColors.brandOrange)
-                    )
-                
-                if let badge = badge {
-                    Text(badge)
-                        .font(.system(size: 9))
-                        .bold()
-                        .frame(width: 16, height: 16)
-                        .background(Color.red)
-                        .foregroundColor(.white)
-                        .clipShape(Circle())
-                        .offset(x: 2, y: -3)
-                }
-            }
-            VStack(alignment: .leading) {
-                Text(title)
-                    .font(.system(size: 14, weight: .heavy))
-                    .foregroundColor(.white)
-                Spacer()
-                    .frame(height: 2)
-                Text(subtitle)
-                    .font(.system(size: 11, weight: .light))
-                    .foregroundColor(.white.opacity(0.6))
+        NavigationLink(destination: ChatRoomListView()){
+            HStack {
+                ZStack(alignment: .topTrailing) {
+                    Circle()
+                        .fill(.ultraThinMaterial.opacity(0.2))
+                        .frame(width: 35, height: 35)
+                        .overlay(
+                            Image(systemName: icon)
+                                .font(.system(size: 13))
+                                .foregroundColor(AppColors.brandOrange)
+                        )
                     
+                    if let badge = badge {
+                        Text(badge)
+                            .font(.system(size: 9))
+                            .bold()
+                            .frame(width: 16, height: 16)
+                            .background(Color.red)
+                            .foregroundColor(.white)
+                            .clipShape(Circle())
+                            .offset(x: 2, y: -3)
+                    }
+                }
+                VStack(alignment: .leading) {
+                    Text(title)
+                        .font(.system(size: 14, weight: .heavy))
+                        .foregroundColor(.white)
+                    Spacer()
+                        .frame(height: 2)
+                    Text(subtitle)
+                        .font(.system(size: 11, weight: .light))
+                        .foregroundColor(.white.opacity(0.6))
+                        
+                }
+                Spacer()
             }
-            Spacer()
+            .padding(.horizontal)
         }
-        .padding(.horizontal)
         
     }
     

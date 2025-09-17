@@ -14,35 +14,70 @@ enum Tab {
 
 struct BottomTabBarView: View {
     var currentSelection: Tab
+    
     var body: some View {
-        HStack{
-            NavigationLink(destination: HomeView()) {
-                TabItems(icon: "house.fill", label: "홈", active: currentSelection == .home)
+        HStack {
+            // 홈
+            if currentSelection == .home {
+                TabItems(icon: "house.fill", label: "홈", active: true)
+            } else {
+                NavigationLink(destination: HomeView()) {
+                    TabItems(icon: "house.fill", label: "홈", active: false)
+                }
+                .buttonStyle(PlainButtonStyle())
             }
+            
             Spacer()
-            NavigationLink(destination: FindVehicleView()) {
-                TabItems(icon: "car", label: "매물찾기", active: currentSelection == .vehicles)
+            
+            // 매물찾기
+            if currentSelection == .vehicles {
+                TabItems(icon: "car", label: "매물찾기", active: true)
+            } else {
+                NavigationLink(destination: FindVehicleView()) {
+                    TabItems(icon: "car", label: "매물찾기", active: false)
+                }
+                .buttonStyle(PlainButtonStyle())
             }
+            
             Spacer()
-            NavigationLink(destination: VehicleRegistrationView()) {
-                TabItems(icon: "plus.circle", label: "매물등록", active: currentSelection == .register)
+            
+            // 매물등록
+            if currentSelection == .register {
+                TabItems(icon: "plus.circle", label: "매물등록", active: true)
+            } else {
+                NavigationLink(destination: VehicleRegistrationView()) {
+                    TabItems(icon: "plus.circle", label: "매물등록", active: false)
+                }
+                .buttonStyle(PlainButtonStyle())
             }
+            
             Spacer()
-            NavigationLink(destination: Text("찜리스트")) {
-                TabItems(icon: "heart", label: "찜", active: currentSelection == .favorites)
+            
+            // 찜
+            if currentSelection == .favorites {
+                TabItems(icon: "heart", label: "찜", active: true)
+            } else {
+                NavigationLink(destination: Text("찜리스트")) {
+                    TabItems(icon: "heart", label: "찜", active: false)
+                }
+                .buttonStyle(PlainButtonStyle())
             }
+            
             Spacer()
+            
+            // 프로필
             if currentSelection == .profile {
                 TabItems(icon: "person", label: "프로필", active: true)
             } else {
                 NavigationLink(destination: ProfileView(userId: "1", isOwnProfile: true)) {
                     TabItems(icon: "person", label: "프로필", active: false)
                 }
+                .buttonStyle(PlainButtonStyle())
             }
         }
         .padding(.horizontal)
-        .padding(.top,10)
-        .padding(.bottom,20)
+        .padding(.top, 10)
+        .padding(.bottom, 20)
         .frame(maxWidth: .infinity)
         .background(
             AppColors.brandBackground
@@ -50,14 +85,13 @@ struct BottomTabBarView: View {
                 .overlay(
                     Rectangle()
                         .fill(Color.gray.opacity(0.3))
-                        .frame(height:1),
+                        .frame(height: 1),
                     alignment: .top
                 )
         )
     }
-    
-    
 }
+
 
 
 struct TabItems: View {
@@ -75,3 +109,4 @@ struct TabItems: View {
         }
     }
 }
+
