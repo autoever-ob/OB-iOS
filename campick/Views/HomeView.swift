@@ -18,7 +18,7 @@ struct HomeView: View {
                 VStack(spacing: 0) {
                     HStack {
                         Text("Campick")
-                            .font(.custom("Pacifico", size: 24))
+                            .font(.custom("Pacifico", size: 30))
                             .foregroundColor(.white)
                             .shadow(radius: 2)
                         
