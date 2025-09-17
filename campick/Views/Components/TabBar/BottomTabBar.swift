@@ -24,7 +24,7 @@ struct BottomTabBarView: View {
                 TabItems(icon: "car", label: "매물찾기", active: currentSelection == .vehicles)
             }
             Spacer()
-            NavigationLink(destination: Text("매물등록")) {
+            NavigationLink(destination: VehicleRegistrationView()) {
                 TabItems(icon: "plus.circle", label: "매물등록", active: currentSelection == .register)
             }
             Spacer()
