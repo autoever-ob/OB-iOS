@@ -111,7 +111,7 @@ struct LoginView: View {
                                     .foregroundStyle(Color.gray)
                                 // 회원가입
                                 NavigationLink {
-                                    SignupView()
+                                    SignupFlowView()
                                 } label: {
                                     Text("회원가입")
                                         .font(Font.subheadline.bold())
@@ -135,4 +135,3 @@ struct LoginView_Previews: PreviewProvider {
         LoginView()
     }
 }
-
