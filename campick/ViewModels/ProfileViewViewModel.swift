@@ -10,8 +10,8 @@ import Combine
 
 class ProfileViewViewModel: ObservableObject {
     @Published var userProfile: UserProfile
-    @Published var activeListings: [VehicleListing] = []
-    @Published var soldListings: [VehicleListing] = []
+    @Published var activeListings: [Vehicle] = []
+    @Published var soldListings: [Vehicle] = []
     @Published var activeTab: TabType = .active
     @Published var showEditModal = false
     @Published var showLogoutModal = false
@@ -66,60 +66,80 @@ class ProfileViewViewModel: ObservableObject {
     }
 
     func loadListings() {
-        // Mock active listings
+        // Mock active listings (mapped to unified Vehicle)
         activeListings = [
-            VehicleListing(
+            Vehicle(
                 id: "1",
+                imageName: "bannerImage",
+                thumbnailURL: nil,
                 title: "현대 포레스트 프리미엄",
-                image: "bannerImage",
-                price: 8900,
-                year: 2022,
-                mileage: 15000,
+                price: "\(8900.formatted())만원",
+                year: "2022년",
+                mileage: "\(15000.formatted())km",
+                fuelType: "-",
+                transmission: "-",
+                location: "서울 강남구",
                 status: .active,
-                location: "서울 강남구",
-                postedDate: "2024.01.15"
+                postedDate: "2024.01.15",
+                isOnSale: true,
+                isFavorite: false
             ),
-            VehicleListing(
+            Vehicle(
                 id: "2",
+                imageName: "bannerImage",
+                thumbnailURL: nil,
                 title: "스타리아 캠퍼",
-                image: "bannerImage",
-                price: 7200,
-                year: 2023,
-                mileage: 8000,
-                status: .reserved,
+                price: "\(7200.formatted())만원",
+                year: "2023년",
+                mileage: "\(8000.formatted())km",
+                fuelType: "-",
+                transmission: "-",
                 location: "서울 강남구",
-                postedDate: "2024.01.10"
+                status: .reserved,
+                postedDate: "2024.01.10",
+                isOnSale: true,
+                isFavorite: false
             )
         ]
 
         // Mock sold listings
         soldListings = [
-            VehicleListing(
+            Vehicle(
                 id: "3",
+                imageName: "bannerImage",
+                thumbnailURL: nil,
                 title: "카니발 캠핑카",
-                image: "bannerImage",
-                price: 6500,
-                year: 2021,
-                mileage: 25000,
-                status: .sold,
+                price: "\(6500.formatted())만원",
+                year: "2021년",
+                mileage: "\(25000.formatted())km",
+                fuelType: "-",
+                transmission: "-",
                 location: "서울 강남구",
-                postedDate: "2023.12.20"
+                status: .sold,
+                postedDate: "2023.12.20",
+                isOnSale: false,
+                isFavorite: false
             ),
-            VehicleListing(
+            Vehicle(
                 id: "4",
+                imageName: "bannerImage",
+                thumbnailURL: nil,
                 title: "봉고3 캠퍼밴",
-                image: "bannerImage",
-                price: 4200,
-                year: 2020,
-                mileage: 35000,
-                status: .sold,
+                price: "\(4200.formatted())만원",
+                year: "2020년",
+                mileage: "\(35000.formatted())km",
+                fuelType: "-",
+                transmission: "-",
                 location: "서울 강남구",
-                postedDate: "2023.12.15"
+                status: .sold,
+                postedDate: "2023.12.15",
+                isOnSale: false,
+                isFavorite: false
             )
         ]
     }
 
-    var currentListings: [VehicleListing] {
+    var currentListings: [Vehicle] {
         switch activeTab {
         case .active:
             return activeListings

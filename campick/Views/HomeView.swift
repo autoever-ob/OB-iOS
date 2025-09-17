@@ -70,7 +70,7 @@ struct HomeView: View {
                                 .padding()
                             }
                             
-                            NavigationLink(destination: Text("매물찾기 화면")) {
+                            NavigationLink(destination: FindVehicleView()) {
                                 HStack {
                                     HStack {
                                         ZStack {

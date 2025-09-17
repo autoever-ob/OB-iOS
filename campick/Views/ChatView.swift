@@ -74,7 +74,14 @@ struct TypingIndicator: View {
         .cornerRadius(16)
         .onAppear {
             animate = true
+            
         }
+    }
+}
+
+    static var defaultValue: CGFloat = .zero
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }
 
@@ -87,12 +94,19 @@ struct ChatView: View {
         ChatMessage(id: "1", text: "안녕하세요! 현대 포레스트 프리미엄 매물에 관심을 가져주셔서 감사합니다.", timestamp: Date().addingTimeInterval(-30), isMyMessage: false, type: .text),
         ChatMessage(id: "2", text: "궁금한 점이 있으시면 언제든 문의해주세요!", timestamp: Date().addingTimeInterval(-25), isMyMessage: false, type: .text),
         ChatMessage(id: "3", text: "안녕하세요! 실제로 차량을 보고 싶은데 언제 가능한가요?", timestamp: Date().addingTimeInterval(-20), isMyMessage: true, type: .text, status: .read),
-        ChatMessage(id: "4", text: "네, 언제든 가능합니다! 평일 오전 10시부터 오후 6시까지 가능하고, 주말도 가능해요.", timestamp: Date().addingTimeInterval(-15), isMyMessage: false, type: .text)
+        ChatMessage(id: "4", text: "네, 언제든 가능합니다! 평일 오전 10시부터 오후 6시까지 가능하고, 주말도 가능해요.", timestamp: Date().addingTimeInterval(-15), isMyMessage: false, type: .text),
+        ChatMessage(id: "5", text: "잠시만요. 제가 지금 바빠서요. 잠시만 기다려주세요.", timestamp: Date().addingTimeInterval(-15), isMyMessage: true, type: .text, status: .read),
+        ChatMessage(id: "6", text: "네.", timestamp: Date().addingTimeInterval(-15), isMyMessage: false, type: .text),
+        ChatMessage(id: "7", text: "저기요.", timestamp: Date().addingTimeInterval(-15), isMyMessage: false, type: .text),
+        ChatMessage(id: "8", text: "판매 완료했어요.", timestamp: Date().addingTimeInterval(-15), isMyMessage: false, type: .text)
     ]
     
     @State private var newMessage: String = ""
     @State private var isTyping: Bool = false
-    
+    @State private var isAtBottom: Bool = true
+    @State private var didEnterInitially = false
+    private let bottomThreshold: CGFloat = 40
+
     var body: some View {
         VStack(spacing: 0) {
             // MARK: - 헤더
@@ -140,15 +154,6 @@ struct ChatView: View {
                                 .clipShape(Circle())
                             
                         }
-                        //                        Button {
-                        //                            // 옵션 버튼
-                        //                        } label: {
-                        //                            Image(systemName: "ellipsis")
-                        //                                .foregroundColor(.white)
-                        //                                .padding(16)
-                        //                                .background(Color.white.opacity(0.1))
-                        //                                .clipShape(Circle())
-                        //                        }
                     }
                 }
                 .padding()
@@ -200,77 +205,152 @@ struct ChatView: View {
             )
             
             // MARK: - 메시지 영역
-            ScrollView {
-                ScrollViewReader { proxy in
-                    VStack(spacing: 12) {
-                        ForEach(messages) { msg in
-                            HStack {
-                                if msg.isMyMessage {
-                                    Spacer()
-                                    VStack(alignment: .trailing) {
-                                        Text(msg.text)
-                                            .padding()
-                                            .background(AppColors.brandOrange)
-                                            .foregroundColor(.white)
-                                            .cornerRadius(16)
-                                        
-                                        HStack(spacing: 4) {
-                                            Text(formatTime(msg.timestamp))
-                                                .foregroundColor(.white.opacity(0.5))
-                                                .font(.caption2)
-                                            
-                                   
-                                            if msg.id == messages.last(where: { $0.isMyMessage })?.id {
-                                                MessageStatusView(status: msg.status ?? .sent,
-                                                                  timestamp: msg.timestamp)
+            ZStack {
+                // GeometryReader : 좌표 공간을 기준으로 위치, 크기 계산 가능 -> 스크롤 뷰의 위치 추적
+                GeometryReader { outerGeo in
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            VStack(spacing: 12) {
+                                ForEach(messages) { msg in
+                                    HStack {
+                                        if msg.isMyMessage {
+                                            Spacer()
+                                            VStack(alignment: .trailing) {
+                                                Text(msg.text)
+                                                    .padding()
+                                                    .background(AppColors.brandOrange)
+                                                    .foregroundColor(.white)
+                                                    .cornerRadius(16)
+                                                HStack(spacing: 4) {
+                                                    Text(formatTime(msg.timestamp))
+                                                        .foregroundColor(.white.opacity(0.5))
+                                                        .font(.caption2)
+                                                    if msg.id == messages.last(where: { $0.isMyMessage })?.id {
+                                                        MessageStatusView(status: msg.status ?? .sent,
+                                                                          timestamp: msg.timestamp)
+                                                    }
+                                                }
                                             }
+                                            .frame(maxWidth: 300, alignment: .trailing)
+                                        } else {
+                                            Image("bannerImage",bundle: nil)
+                                                .resizable()
+                                                .frame(width: 40, height: 40)
+                                                .clipShape(Circle())
+                                                .padding(.bottom,60)
+                                            VStack(alignment: .leading) {
+                                                Text(msg.text)
+                                                    .padding()
+                                                    .background(.ultraThinMaterial.opacity(0.2))
+                                                    .overlay(
+                                                        RoundedRectangle(cornerRadius: 16)
+                                                            .stroke(Color.gray.opacity(0.4), lineWidth: 1)
+                                                    )
+                                                    .foregroundColor(.white)
+                                                    .cornerRadius(16)
+                                                Text(formatTime(msg.timestamp))
+                                                    .foregroundColor(.white.opacity(0.5))
+                                                    .font(.caption2)
+                                            }
+                                            .frame(maxWidth: 300, alignment: .leading)
+                                            Spacer()
                                         }
                                     }
-                                    .frame(maxWidth: 300, alignment: .trailing)
-                                } else {
-                                    Image("bannerImage",bundle: nil)
-                                        .resizable()
-                                        .frame(width: 40, height: 40)
-                                        .clipShape(Circle())
-                                        .padding(.bottom,60)
-                                    VStack(alignment: .leading) {
-                                        Text(msg.text)
-                                            .padding()
-                                            .background(.ultraThinMaterial.opacity(0.2))
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 16)
-                                                    .stroke(Color.gray.opacity(0.4), lineWidth: 1)
-                                            )
-                                            .foregroundColor(.white)
-                                            .cornerRadius(16)
-                                        Text(formatTime(msg.timestamp))
-                                            .foregroundColor(.white.opacity(0.5))
-                                            .font(.caption2)
+                                    .id(msg.id)
+                                }
+                                Color.clear
+                                    .frame(height: 1)
+                                    .id("bottom-anchor")
+                                    .background(
+                                        // 좌표 공간을 기준으로 위치, 크기 계산 가능 -> 스크롤 뷰의 위치 추적
+                                        GeometryReader { geo in
+                                            Color.clear
+                                                .preference(key: ViewOffsetKey.self, value: geo.frame(in: .named("scroll")).maxY)
+                                        }
+                                    )
+                                if isTyping {
+                                    HStack {
+                                        TypingIndicator()
+                                        Spacer()
                                     }
-                                    .frame(maxWidth: 300, alignment: .leading)
-                                    Spacer()
                                 }
                             }
-                            .id(msg.id) // 각 메시지에 id를 달아야 scrollTo 가능
-                        }
-                        if isTyping {
-                            HStack {
-                                TypingIndicator()
-                                Spacer()
+                            .padding()
+                            .onChange(of: messages.count) { _, newValue in
+                                withAnimation {
+                                    proxy.scrollTo(messages.last?.id, anchor: .bottom)
+                                }
+                            }
+                            .onChange(of: messages.last?.id) { _, _ in
+                                DispatchQueue.main.async {
+                                    isAtBottom = true
+                                }
                             }
                         }
-                    }
-                    .padding()
-                    .onChange(of: messages.count) { oldValue, newValue in
-                        withAnimation {
-                            proxy.scrollTo(messages.last?.id, anchor: .bottom)
+                        .coordinateSpace(name: "scroll")
+                        // 좌표 공간을 기준으로 위치, 크기 계산 가능 -> 스크롤 뷰의 위치 추적
+                        .onPreferenceChange(ViewOffsetKey.self) { bottomMaxY in
+                            let visibleBottom = outerGeo.frame(in: .local).maxY
+                            let adjustedVisibleBottom = visibleBottom + 22
+                            let distance = adjustedVisibleBottom - bottomMaxY
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                isAtBottom = distance >= 0 && distance <= bottomThreshold
+                            }
                         }
+                        .onAppear {
+                            DispatchQueue.main.async {
+                                if let lastId = messages.last?.id {
+                                    proxy.scrollTo(lastId, anchor: .bottom)
+                                } else {
+                                    proxy.scrollTo("bottom-anchor", anchor: .bottom)
+                                }
+                                
+                                DispatchQueue.main.async {
+                                    if let lastId = messages.last?.id {
+                                        proxy.scrollTo(lastId, anchor: .bottom)
+                                    } else {
+                                        proxy.scrollTo("bottom-anchor", anchor: .bottom)
+                                    }
+                                }
+                            }
+                        }
+                        .simultaneousGesture(DragGesture().onChanged { _ in
+                            isAtBottom = false
+                        })
+                        .overlay(alignment: .bottomTrailing) {
+                            if messages.count >= 6 && !isAtBottom {
+                                Button {
+                                    withAnimation {
+                                        proxy.scrollTo("bottom-anchor", anchor: .bottom)
+                                    }
+                                    DispatchQueue.main.async {
+                                        withAnimation(.easeInOut(duration: 0.01)) {
+                                            isAtBottom = true
+                                        }
+                                    }
+                                } label: {
+                                    Image(systemName: "arrow.down")
+                                        .font(.system(size: 20, weight: .semibold))
+                                        .foregroundColor(.white)
+                                        .padding(12)
+                                        .background(AppColors.brandOrange.opacity(0.8))
+                                        .clipShape(Circle())
+                                        .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 2)
+                                }
+                                .padding(.trailing, 16)
+                                .padding(.bottom, 16)
+                                .transition(.opacity.combined(with: .scale))
+                            }
+                        }
+                        .animation(.easeInOut(duration: 0.2), value: isAtBottom)
                     }
-                    
-                    
+                    .onAppear{
+                        isAtBottom = true
+                    }
                 }
             }
             .background(AppColors.brandBackground)
+            
             
             // MARK: - 입력창
             HStack {
@@ -292,7 +372,6 @@ struct ChatView: View {
                 
                 Button(action: sendMessage) {
                     Image(systemName: "paperplane.fill")
-//                        .font(.system(size: 3))
                         .foregroundColor(.white)
                         .padding(10)
                         .background(newMessage.isEmpty ? Color.white.opacity(0.2) : AppColors.brandOrange)
@@ -380,3 +459,4 @@ struct MessageStatusView: View {
         vehicle: ChatVehicle(id: "1", title: "현대 포레스트 프리미엄", price: 8900, status: "판매중", image: "https://picsum.photos/200/120?random=3")
     )
 }
+

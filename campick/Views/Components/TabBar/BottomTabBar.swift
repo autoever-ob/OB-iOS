@@ -45,7 +45,7 @@ struct BottomTabBarView: View {
             if currentSelection == .register {
                 TabItems(icon: "plus.circle", label: "매물등록", active: true)
             } else {
-                NavigationLink(destination: Text("매물등록")) {
+                NavigationLink(destination: VehicleRegistrationView()) {
                     TabItems(icon: "plus.circle", label: "매물등록", active: false)
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -109,3 +109,4 @@ struct TabItems: View {
         }
     }
 }
+
