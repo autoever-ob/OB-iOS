@@ -28,7 +28,6 @@ enum VehicleStatus: String, CaseIterable {
         }
     }
 }
-
 struct Vehicle: Identifiable {
     let id: String
     // Images
