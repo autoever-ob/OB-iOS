@@ -2,13 +2,13 @@
 //  VehicleCardView.swift
 //  campick
 //
-//  Created by Admin on 9/16/25.
+//  Admin이 2025-09-16에 작성함
 //
 
 import SwiftUI
 
 struct VehicleCardView: View {
-    // MARK: - Stored properties used for rendering
+    // MARK: - 렌더링에 사용되는 저장 프로퍼티
     private let imageName: String?
     private let thumbnailURL: URL?
     private let title: String
@@ -18,14 +18,15 @@ struct VehicleCardView: View {
     private let fuelType: String
     private let transmission: String
     private let location: String
+    private let isOnSale: Bool
     @State private var isFavorite: Bool
 
-    // MARK: - Design constants
+    // MARK: - 디자인 상수
     private let cornerRadius: CGFloat = 12
     private let imageHeight: CGFloat = 180
 
-    // MARK: - Initializers
-    // 1) Model-based initializer (backwards compatible)
+    // MARK: - 이니셜라이저
+    // 1) 모델 기반 이니셜라이저(하위 호환)
     init(vehicle: Vehicle) {
         self.imageName = vehicle.imageName
         self.thumbnailURL = vehicle.thumbnailURL
@@ -36,10 +37,11 @@ struct VehicleCardView: View {
         self.fuelType = vehicle.fuelType
         self.transmission = vehicle.transmission
         self.location = vehicle.location
+        self.isOnSale = vehicle.isOnSale
         self._isFavorite = State(initialValue: vehicle.isFavorite)
     }
 
-    // 2) Parameter-based convenience initializer for mock/loose data
+    // 2) 목업 데이터용 이니셜라이저
     init(
         title: String,
         price: String,
@@ -50,6 +52,7 @@ struct VehicleCardView: View {
         location: String,
         imageName: String? = nil,
         thumbnailURL: URL? = nil,
+        isOnSale: Bool = true,
         isFavorite: Bool = false
     ) {
         self.imageName = imageName
@@ -61,163 +64,144 @@ struct VehicleCardView: View {
         self.fuelType = fuelType
         self.transmission = transmission
         self.location = location
+        self.isOnSale = isOnSale
         self._isFavorite = State(initialValue: isFavorite)
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // 차량 이미지
-            ZStack(alignment: .top) {
-                vehicleImage
+        ZStack(alignment: .top) {
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(.ultraThinMaterial.opacity(0.2))
+                .overlay(
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .stroke(Color.gray.opacity(0.4), lineWidth: 1)
+                )
+            
+            VStack(alignment: .leading, spacing: 0) {
+                // 헤더(이미지)
+                headerSection
                     .frame(height: imageHeight)
                     .clipped()
                     .clipShape(.rect(
                         cornerRadii: .init(topLeading: cornerRadius, topTrailing: cornerRadius),
                         style: .continuous
                     ))
+                    .overlay(alignment: .topLeading) {
+                        HStack {
+                            SalesStatusChip(isOnSale: isOnSale)
+                                .padding(8)
+                            Spacer()
+                            Image(systemName: isFavorite ? "heart.fill" : "heart")
+                                .foregroundColor(isFavorite ? .red : .gray)
+                                .padding(.trailing, 6)
+                                .onTapGesture { isFavorite.toggle() }
+                        }
+                        .padding(.horizontal, 4)
+                    }
 
-                // 판매중 배지와 하트 아이콘
-                HStack {
-                    Text("판매중")
-                        .font(.caption.bold())
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(AppColors.brandLightGreen)
-                        .clipShape(Capsule())
-                        .padding(8)
-                    Spacer()
-                    Image(systemName: isFavorite ? "heart.fill" : "heart")
-                        .foregroundColor(isFavorite ? .red : .gray)
-                        .padding(8)
-                        .onTapGesture { isFavorite.toggle() }
-                }
+                // 정보 섹션
+                infoSection
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 2)
+                
             }
-
-            // 차량 정보
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text(title)
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    Spacer()
-                }
-
-                Text(price)
-                    .font(.title3.bold())
-                    .foregroundColor(AppColors.brandOrange)
-
-                HStack(spacing: 16) {
-                    Label(year, systemImage: "calendar")
-                    Label(mileage, systemImage: "speedometer")
-                    Label(fuelType, systemImage: "fuelpump")
-                    Label(transmission, systemImage: "gearshape")
-                }
-                .font(.caption)
-                .foregroundColor(.white.opacity(0.8))
-
-                HStack {
-                    Image(systemName: "mappin.and.ellipse")
-                    Text(location)
-                }
-                .font(.caption)
-                .foregroundColor(.white.opacity(0.8))
-            }
-            .padding(12)
-            .background(Color.white.opacity(0.12))
-            .clipShape(.rect(
-                cornerRadii: .init(bottomLeading: cornerRadius, bottomTrailing: cornerRadius),
-                style: .continuous
-            ))
         }
         .shadow(radius: 3)
         .padding(.horizontal, 8)
     }
 
-    // MARK: - Image builder
+    // MARK: - 이미지 빌더
     @ViewBuilder
     private var vehicleImage: some View {
         if let imageName {
             Image(imageName)
                 .resizable()
                 .scaledToFill()
-        } else if let thumbnailURL {
-
-            AsyncImage(url: thumbnailURL) { phase in
-                switch phase {
-                case .empty:
-                    ZStack { Color.white.opacity(0.08); ProgressView() }
-                case .success(let image):
-                    image.resizable().scaledToFill()
-                case .failure:
-                    ZStack {
-                        Color.white.opacity(0.08)
-                        Image(systemName: "car")
-                            .font(.system(size: 28, weight: .semibold))
-                            .foregroundStyle(.white.opacity(0.7))
-                    }
-                @unknown default:
-                    Color.white.opacity(0.08)
-                }
-            }
         } else {
-            ZStack {
-                Color.white.opacity(0.08)
-                Image(systemName: "car")
-                    .font(.system(size: 28, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.7))
+            Image("testImage3")
+                .resizable()
+                .scaledToFill()
+        }
+    }
+    
+    // MARK: - 정보 섹션
+    private var infoSection: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            // 제목
+            HStack {
+                Text(title)
+                    .font(.headline)
+                    .bold()
+                    .foregroundColor(.white)
+                Spacer()
+            }
+            .padding(.top, 10)
+
+            // 가격
+            Text(price)
+                .font(.title3.bold())
+                .foregroundColor(AppColors.brandOrange)
+
+            HStack(spacing: 10) {
+                Label(location, systemImage: "map")
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Label(year, systemImage: "calendar")
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Label(mileage, systemImage: "speedometer")
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Label(fuelType, systemImage: "fuelpump")
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Label(transmission, systemImage: "gearshape")
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .labelStyle(CustomLabelStyle(spacing: 4))
+            .font(.system(size: 10))
+            .foregroundColor(.white.opacity(0.7))
+            .padding(.bottom, 4)
+        }
+    }
+
+    // MARK: - 헤더 섹션
+    private var headerSection: some View {
+        ZStack {
+            Color.clear
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            if imageName != nil || thumbnailURL != nil {
+                vehicleImage
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .clipped()
             }
         }
     }
 }
 
-// MARK: - Model
-struct Vehicle {
-    let imageName: String?
-    let thumbnailURL: URL?
-    let title: String
-    let price: String
-    let year: String
-    let mileage: String
-    let fuelType: String
-    let transmission: String
-    let location: String
-    let isFavorite: Bool
-}
-
-// MARK: - Preview
+// MARK: - 미리보기
 struct VehicleCardView_Previews: PreviewProvider {
     static var previews: some View {
-        VStack(spacing: 16) {
-            VehicleCardView(
-                vehicle: Vehicle(
-                    imageName: "testImage3",
-                    thumbnailURL: nil,
-                    title: "기아 K5",
-                    price: "3,200만원",
-                    year: "2023년",
-                    mileage: "8,000km",
-                    fuelType: "가솔린",
-                    transmission: "자동",
-                    location: "서울 서초구",
-                    isFavorite: true
-                )
-            )
-            VehicleCardView(
-                title: "현대 아반떼 N",
-                price: "2,900만원",
-                year: "2022년",
-                mileage: "12,000km",
+        VehicleCardView(
+            vehicle: Vehicle(
+                id: "preview-1",
+                imageName: "testImage3",
+                thumbnailURL: nil,
+                title: "기아 K5",
+                price: "3,200만원",
+                year: "2023년",
+                mileage: "8,000km",
                 fuelType: "가솔린",
                 transmission: "자동",
-                location: "부산",
-                imageName: nil,
-                thumbnailURL: URL(string: "https://picsum.photos/600/400"),
-                isFavorite: false
+                location: "서울 서초구",
+                status: .sold,
+                postedDate: nil,
+                isOnSale: false,
+                isFavorite: true
             )
-        }
+        )
         .background(Color.black)
-        .padding()
     }
 }
-

@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct VehicleListingCardProfile: View {
-    let listing: VehicleListing
+    let listing: Vehicle
     let isOwnProfile: Bool
 
     var body: some View {
@@ -39,7 +39,7 @@ struct VehicleListingCardProfile: View {
                     .font(.system(size: 15, weight: .semibold))
                     .lineLimit(1)
 
-                Text("\(listing.price.formatted())만원")
+                Text("\(listing.price)만원")
                     .foregroundColor(AppColors.brandOrange)
                     .font(.system(size: 17, weight: .bold))
 
@@ -48,6 +48,7 @@ struct VehicleListingCardProfile: View {
                         Image(systemName: "calendar")
                             .foregroundColor(.white.opacity(0.6))
                             .font(.system(size: 10))
+
 
                         Text("\(String(listing.year))년")
                             .foregroundColor(.white.opacity(0.6))
@@ -59,7 +60,7 @@ struct VehicleListingCardProfile: View {
                             .foregroundColor(.white.opacity(0.6))
                             .font(.system(size: 10))
 
-                        Text("\(listing.mileage.formatted(.number.grouping(.automatic)))km")
+                        Text("\(listing.mileage)km")
                             .foregroundColor(.white.opacity(0.6))
                             .font(.system(size: 13))
                     }
@@ -73,9 +74,11 @@ struct VehicleListingCardProfile: View {
 
                     Spacer()
 
-                    Text(listing.postedDate)
-                        .foregroundColor(.white.opacity(0.6))
-                        .font(.system(size: 13))
+                    if let posted = listing.postedDate {
+                        Text(posted)
+                            .foregroundColor(.white.opacity(0.6))
+                            .font(.system(size: 13))
+                    }
                 }
             }
 
