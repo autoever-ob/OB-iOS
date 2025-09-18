@@ -12,6 +12,7 @@ struct LoginView: View {
     @State private var password: String = ""
     @State private var keepLoggedIn: Bool = false
     @State private var goHome = false
+    @StateObject private var userState = UserState.shared
 
     var body: some View {
         NavigationStack {
@@ -79,10 +80,7 @@ struct LoginView: View {
                                 titleFont: .system(size: 18, weight: .bold),
                                 isDisabled: email.isEmpty || password.isEmpty,
                             ) {
-                                goHome = true
-                            }
-                            .navigationDestination(isPresented: $goHome) {
-                                HomeView()
+                                handleLogin()
                             }
                             
                             // 구분선
@@ -126,7 +124,19 @@ struct LoginView: View {
                 }
             }
         }
-        
+    }
+
+    private func handleLogin() {
+        // Mock login - in real app, this would call API
+        userState.saveToken(accessToken: "mock_access_token")
+        userState.saveUserData(
+            name: "김캠핑",
+            nickName: "캠핑러버",
+            phoneNumber: "010-1234-5678",
+            memberId: "member123",
+            dealerId: "dealer456",
+            role: "USER"
+        )
     }
 }
 
