@@ -28,20 +28,23 @@ struct ProfileView: View {
 
                 VStack(spacing: 0) {
                 if viewModel.isOwnProfile {
-                    CustomNavigationBar(
-                        title: "내 프로필",
-                        isOwnProfile: viewModel.isOwnProfile,
-                        onEditTapped: {
-                            viewModel.showEditModal = true
-                        }
-                    )
+                    TopBarView(title: "내 프로필") {
+                        dismiss()
+                    }
+                } else {
+                    TopBarView(title: "판매자 프로필") {
+                        dismiss()
+                    }
                 }
 
                 ScrollView {
                     VStack(spacing: 16) {
                         ProfileHeaderCompact(
                             userProfile: viewModel.userProfile,
-                            isOwnProfile: viewModel.isOwnProfile
+                            isOwnProfile: viewModel.isOwnProfile,
+                            onEditTapped: {
+                                viewModel.showEditModal = true
+                            }
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 12)
@@ -68,10 +71,8 @@ struct ProfileView: View {
                 }
                 }
             }
-            .navigationBarHidden(viewModel.isOwnProfile)
-            .navigationTitle(viewModel.isOwnProfile ? "" : "판매자 프로필")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .navigationBarHidden(true)
+            .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $viewModel.showEditModal) {
                 ProfileEditModal(viewModel: viewModel)
             }

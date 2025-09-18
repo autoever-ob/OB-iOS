@@ -15,7 +15,6 @@ struct VehicleDetailView: View {
     @State private var isFavorite = false
     @State private var chatMessage = ""
 
-    // Mock data
     private var vehicleData: VehicleData {
         VehicleData(
             id: vehicleId,
@@ -54,7 +53,6 @@ struct VehicleDetailView: View {
                             dismiss()
                         },
                         onShareTap: {
-                            // TODO: Share functionality
                             print("공유하기")
                         }
                     )
@@ -123,8 +121,6 @@ struct VehicleDetailView: View {
                     }
 
                     Button(action: {
-                        // TODO: Navigate to chat page
-                        print("채팅 페이지로 이동: \(chatMessage)")
                         chatMessage = ""
                     }) {
                         Image(systemName: "paperplane.fill")
