@@ -45,28 +45,45 @@ class ProfileViewViewModel: ObservableObject {
         self.userId = userId
         self.isOwnProfile = isOwnProfile
 
-        // Mock data initialization
-        self.userProfile = UserProfile(
-            id: "1",
-            name: "김캠핑",
-            avatar: "https://readdy.ai/api/search-image?query=Professional%20headshot%20portrait",
-            joinDate: "2023.03",
-            rating: 4.8,
-            totalListings: 12,
-            activeListing: 4,
-            totalSales: 8,
-            isDealer: true,
-            location: "서울 강남구",
-            phone: "010-1234-5678",
-            email: "user@example.com",
-            bio: "캠핑과 여행을 사랑하는 모터홈 전문 딜러입니다. 고객 만족을 최우선으로 생각하며, 최상의 캠핑카를 제공해드립니다."
-        )
+        if isOwnProfile {
+            let userState = UserState.shared
+            self.userProfile = UserProfile(
+                id: userState.memberId.isEmpty ? "1" : userState.memberId,
+                name: userState.name.isEmpty ? "김캠핑" : userState.name,
+                avatar: "https://readdy.ai/api/search-image?query=Professional%20headshot%20portrait",
+                joinDate: "2023.03",
+                rating: 4.8,
+                totalListings: 12,
+                activeListing: 4,
+                totalSales: 8,
+                isDealer: !userState.dealerId.isEmpty,
+                location: "서울 강남구",
+                phone: userState.phoneNumber.isEmpty ? "010-1234-5678" : userState.phoneNumber,
+                email: "user@example.com",
+                bio: "캠핑과 여행을 사랑하는 모터홈 전문 딜러입니다. 고객 만족을 최우선으로 생각하며, 최상의 캠핑카를 제공해드립니다."
+            )
+        } else {
+            self.userProfile = UserProfile(
+                id: "1",
+                name: "김캠핑",
+                avatar: "https://readdy.ai/api/search-image?query=Professional%20headshot%20portrait",
+                joinDate: "2023.03",
+                rating: 4.8,
+                totalListings: 12,
+                activeListing: 4,
+                totalSales: 8,
+                isDealer: true,
+                location: "서울 강남구",
+                phone: "010-1234-5678",
+                email: "user@example.com",
+                bio: "캠핑과 여행을 사랑하는 모터홈 전문 딜러입니다. 고객 만족을 최우선으로 생각하며, 최상의 캠핑카를 제공해드립니다."
+            )
+        }
 
         loadListings()
     }
 
     func loadListings() {
-        // Mock active listings (mapped to unified Vehicle)
         activeListings = [
             Vehicle(
                 id: "1",
@@ -102,7 +119,6 @@ class ProfileViewViewModel: ObservableObject {
             )
         ]
 
-        // Mock sold listings
         soldListings = [
             Vehicle(
                 id: "3",
@@ -157,19 +173,7 @@ class ProfileViewViewModel: ObservableObject {
     }
 
     func logout() {
-        Task {
-            do {
-                try await AuthService.shared.logout()
-                DispatchQueue.main.async {
-                    // TODO: Navigate to login screen or clear user data
-                    print("Logout successful")
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    print("Logout failed: \(error.localizedDescription)")
-                }
-            }
-        }
+        UserState.shared.logout()
     }
 
     func deleteAccount() {
@@ -177,18 +181,6 @@ class ProfileViewViewModel: ObservableObject {
     }
 
     func confirmDeleteAccount() {
-        Task {
-            do {
-                try await AuthService.shared.withdrawal()
-                DispatchQueue.main.async {
-                    // TODO: Navigate to login screen or app start
-                    print("Account withdrawal successful")
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    print("Account withdrawal failed: \(error.localizedDescription)")
-                }
-            }
-        }
+        UserState.shared.logout()
     }
 }
