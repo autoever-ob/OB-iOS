@@ -10,9 +10,27 @@ import SwiftUI
 struct ProfileHeaderCompact: View {
     let userProfile: UserProfile
     let isOwnProfile: Bool
+    var onEditTapped: (() -> Void)? = nil
 
     var body: some View {
         VStack(spacing: 16) {
+            HStack {
+                Spacer()
+                if isOwnProfile {
+                    Button(action: {
+                        onEditTapped?()
+                    }) {
+                        Text("편집")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(AppColors.brandOrange)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(AppColors.brandOrange.opacity(0.1))
+                            .cornerRadius(6)
+                    }
+                }
+            }
+
             ProfileAvatarSection(userProfile: userProfile)
 
             if let bio = userProfile.bio, !bio.isEmpty {

@@ -200,7 +200,7 @@ struct WithdrawalModal: View {
                             .font(.system(size: 13, weight: .semibold))
 
                         // Text input field
-                        TextField("", text: $confirmText)
+                        TextField("이 앱을 탈퇴하겠습니다", text: $confirmText)
                             .textFieldStyle(PlainTextFieldStyle())
                             .foregroundColor(.white)
                             .padding(10)
