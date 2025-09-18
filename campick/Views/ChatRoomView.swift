@@ -1,119 +1,9 @@
 import SwiftUI
 import PhotosUI
 
-
-// MARK: - 모델
-
-enum ChatMessageType {
-    case text, image, system
-}
-
-enum MessageStatus {
-    case sent
-    case delivered
-    case read
-}
-
-struct ChatMessage: Identifiable, Hashable {
-    let id: String
-    let text: String
-    let image: UIImage?
-    let timestamp: Date
-    let isMyMessage: Bool
-    let type: ChatMessageType
-    let status: MessageStatus?
-    
-    init(id: String, text: String, timestamp: Date, isMyMessage: Bool, type: ChatMessageType, status: MessageStatus = .sent) {
-        self.id = id
-        self.text = text
-        self.timestamp = timestamp
-        self.isMyMessage = isMyMessage
-        self.type = type
-        self.status = status
-        self.image = nil
-    }
-    
-    init(id: String, image: UIImage, timestamp: Date, isMyMessage: Bool, type: ChatMessageType, status: MessageStatus = .sent) {
-        self.id = id
-        self.text = ""
-        self.image = image
-        self.timestamp = timestamp
-        self.isMyMessage = isMyMessage
-        self.type = type
-        self.status = status
-    }
-    
-    init(id: String, text: String, image: UIImage, timestamp: Date, isMyMessage: Bool, type: ChatMessageType, status: MessageStatus = .sent) {
-        self.id = id
-        self.text = text
-        self.image = image
-        self.timestamp = timestamp
-        self.isMyMessage = isMyMessage
-        self.type = type
-        self.status = status
-    }
-}
-
-
-struct ChatSeller {
-    let id: String
-    let name: String
-    let avatar: String
-    let isOnline: Bool
-    let lastSeen: Date?
-    let phoneNumber: String
-}
-
-struct ChatVehicle {
-    let id: String
-    let title: String
-    let price: Int
-    let status: String
-    let image: String
-}
-
-
-// MARK: - 타이핑 인디케이터
-struct TypingIndicator: View {
-    @State private var animate = false
-    var body: some View {
-        HStack(spacing: 6) {
-            ForEach(0..<3) { i in
-                Circle()
-                    .fill(Color.gray)
-                    .frame(width: 8, height: 8)
-                    .offset(y: animate ? -4 : 4)
-                    .animation(
-                        Animation
-                            .easeInOut(duration: 0.6)
-                            .repeatForever()
-                            .delay(Double(i) * 0.2),
-                        value: animate
-                    )
-            }
-        }
-        .padding()
-        .background(Color.white.opacity(0.1))
-        .cornerRadius(16)
-        .onAppear {
-            animate = true
-            
-        }
-    }
-}
-
-private struct ViewOffsetKey: PreferenceKey {
-    static var defaultValue: CGFloat = .zero
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
-    }
-}
-
 struct ChatRoomView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
-    
-    
     let seller: ChatSeller
     let vehicle: ChatVehicle
     var onBack: (() -> Void)? = nil
@@ -145,224 +35,23 @@ struct ChatRoomView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // MARK: - 헤더
+            // 헤더
             ChatHeader(
-                seller: seller,
+                showCallAlert: $showCallAlert, seller: seller,
                 onBack: { dismiss() },
                 onCall: { callSeller()},
                 vehicle: vehicle
             )
             
-            // MARK: - 메시지 영역
-            ZStack {
-                // GeometryReader : 좌표 공간을 기준으로 위치, 크기 계산 가능 -> 스크롤 뷰의 위치 추적
-                GeometryReader { outerGeo in
-                    ScrollViewReader { proxy in
-                        ScrollView {
-                            VStack(spacing: 12) {
-                                ForEach(messages) { msg in
-                                    HStack {
-                                        if msg.isMyMessage {
-                                            Spacer()
-                                            VStack(alignment: .trailing) {
-                                                if let img = msg.image, msg.type == .image {
-                                                    VStack(alignment: .trailing, spacing: 4) {
-                                                        Image(uiImage: img)
-                                                            .resizable()
-                                                            .scaledToFill()
-                                                            .frame(maxWidth: 240, maxHeight: 240)
-                                                            .clipped()
-                                                            .cornerRadius(16)
-                                                        if !msg.text.isEmpty {
-                                                            Text(msg.text)
-                                                                .padding()
-                                                                .background(AppColors.brandOrange)
-                                                                .foregroundColor(.white)
-                                                                .cornerRadius(16)
-                                                        }
-                                                    }
-                                                } else {
-                                                    Text(msg.text)
-                                                        .padding()
-                                                        .background(AppColors.brandOrange)
-                                                        .foregroundColor(.white)
-                                                        .cornerRadius(16)
-                                                }
-                                                HStack(spacing: 4) {
-                                                    Text(formatTime(msg.timestamp))
-                                                        .foregroundColor(.white.opacity(0.5))
-                                                        .font(.caption2)
-                                                    if msg.id == messages.last(where: { $0.isMyMessage })?.id {
-                                                        MessageStatusView(status: msg.status ?? .sent,
-                                                                          timestamp: msg.timestamp)
-                                                    }
-                                                }
-                                            }
-                                            .frame(maxWidth: 300, alignment: .trailing)
-                                        } else {
-                                            Image("bannerImage",bundle: nil)
-                                                .resizable()
-                                                .frame(width: 40, height: 40)
-                                                .clipShape(Circle())
-                                            VStack(alignment: .leading) {
-                                                if let img = msg.image, msg.type == .image {
-                                                    VStack(alignment: .leading, spacing: 6) {
-                                                        // 이미지 단독 (테두리/버블 없이)
-                                                        Image(uiImage: img)
-                                                            .resizable()
-                                                            .scaledToFill()
-                                                            .frame(maxWidth: 240, maxHeight: 240)
-                                                            .clipped()
-                                                            .cornerRadius(16)
-                                                        // 캡션이 있으면 텍스트 버블만 별도로
-                                                        if !msg.text.isEmpty {
-                                                            Text(msg.text)
-                                                                .padding()
-                                                                .background(.ultraThinMaterial.opacity(0.2))
-                                                                .overlay(
-                                                                    RoundedRectangle(cornerRadius: 16)
-                                                                        .stroke(Color.gray.opacity(0.4), lineWidth: 1)
-                                                                )
-                                                                .foregroundColor(.white)
-                                                                .cornerRadius(16)
-                                                        }
-                                                    }
-                                                } else {
-                                                    Text(msg.text)
-                                                        .padding()
-                                                        .background(.ultraThinMaterial.opacity(0.2))
-                                                        .overlay(
-                                                            RoundedRectangle(cornerRadius: 16)
-                                                                .stroke(Color.gray.opacity(0.4), lineWidth: 1)
-                                                        )
-                                                        .foregroundColor(.white)
-                                                        .cornerRadius(16)
-                                                }
-                                            }
-                                            .frame(maxWidth: 300, alignment: .leading)
-                                            Spacer()
-                                        }
-                                    }
-                                    .padding(.vertical, 4)
-                                    .id(msg.id)
-                                }
-                                Color.clear
-                                    .frame(height: 1)
-                                    .id("bottom-anchor")
-                                    .background(
-                                        // 좌표 공간을 기준으로 위치, 크기 계산 가능 -> 스크롤 뷰의 위치 추적
-                                        GeometryReader { geo in
-                                            Color.clear
-                                                .preference(key: ViewOffsetKey.self, value: geo.frame(in: .named("scroll")).maxY)
-                                        }
-                                    )
-                                if isTyping {
-                                    HStack {
-                                        TypingIndicator()
-                                        Spacer()
-                                    }
-                                }
-                            }
-                            .padding()
-                            .onChange(of: messages.count) { _, newValue in
-                                withAnimation {
-                                    proxy.scrollTo(messages.last?.id, anchor: .bottom)
-                                }
-                            }
-                            .onChange(of: messages.last?.id) { _, _ in
-                                DispatchQueue.main.async {
-                                    isAtBottom = true
-                                }
-                            }
-                        }
-                        .coordinateSpace(name: "scroll")
-                        // 좌표 공간을 기준으로 위치, 크기 계산 가능 -> 스크롤 뷰의 위치 추적
-                        .onPreferenceChange(ViewOffsetKey.self) { bottomMaxY in
-                            let visibleBottom = outerGeo.frame(in: .local).maxY
-                            let adjustedVisibleBottom = visibleBottom + 22
-                            let distance = adjustedVisibleBottom - bottomMaxY
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                isAtBottom = distance >= 0 && distance <= bottomThreshold
-                            }
-                        }
-                        .onAppear {
-                            DispatchQueue.main.async {
-                                if let lastId = messages.last?.id {
-                                    proxy.scrollTo(lastId, anchor: .bottom)
-                                } else {
-                                    proxy.scrollTo("bottom-anchor", anchor: .bottom)
-                                }
-                                
-                                DispatchQueue.main.async {
-                                    if let lastId = messages.last?.id {
-                                        proxy.scrollTo(lastId, anchor: .bottom)
-                                    } else {
-                                        proxy.scrollTo("bottom-anchor", anchor: .bottom)
-                                    }
-                                }
-                            }
-                        }
-                        .onChange(of: pendingImage) { _, newValue in
-                            guard newValue != nil else { return }
-                            
-                            withAnimation {
-                                proxy.scrollTo("bottom-anchor", anchor: .bottom)
-                            }
-                            DispatchQueue.main.async {
-                                withAnimation(.easeInOut(duration: 0.01)) {
-                                    isAtBottom = true
-                                }
-                            }
-                        }
-                        .onChange(of: keyboardHeight) { _, newValue in
-                            guard newValue > 0 else { return }
-                            
-                            if isAtBottom {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                                    withAnimation {
-                                        proxy.scrollTo("bottom-anchor", anchor: .bottom)
-                                    }
-                                }
-                            }
-                        }
-                        .simultaneousGesture(DragGesture().onChanged { _ in
-                            isAtBottom = false
-                        })
-                        .overlay(alignment: .bottomTrailing) {
-                            if messages.count >= 6 && !isAtBottom {
-                                Button {
-                                    withAnimation {
-                                        proxy.scrollTo("bottom-anchor", anchor: .bottom)
-                                    }
-                                    DispatchQueue.main.async {
-                                        withAnimation(.easeInOut(duration: 0.01)) {
-                                            isAtBottom = true
-                                        }
-                                    }
-                                } label: {
-                                    Image(systemName: "arrow.down")
-                                        .font(.system(size: 20, weight: .semibold))
-                                        .foregroundColor(.white)
-                                        .padding(12)
-                                        .background(AppColors.brandOrange.opacity(0.8))
-                                        .clipShape(Circle())
-                                        .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 2)
-                                }
-                                .padding(.trailing, 16)
-                                .padding(.bottom, 16)
-                                .transition(.opacity.combined(with: .scale))
-                            }
-                        }
-                        .animation(.easeInOut(duration: 0.2), value: isAtBottom)
-                    }
-                    .onAppear{
-                        isAtBottom = true
-                    }
-                }
-            }
-            .background(AppColors.brandBackground)
+            // 메시지 영역
+            MessageList(
+                messages: $messages,
+                isTyping: $isTyping,
+                isAtBottom: $isAtBottom,
+                bottomThreshold: bottomThreshold
+            )
             
-            // MARK: - 입력창
+            // 입력창
             ChatBottomBar(
                 newMessage: $newMessage,
                 pendingImage: $pendingImage,
@@ -380,104 +69,44 @@ struct ChatRoomView: View {
                     )
             )
         }
+        .background(AppColors.brandBackground)
         .padding(.bottom, keyboardHeight)
         .animation(.easeInOut(duration: 0.25), value: keyboardHeight)
         .overlay(alignment: .bottomLeading) {
-            if let preview = pendingImage {
-                HStack(spacing: 12) {
-                    ZStack(alignment: .topTrailing) {
-                        Image(uiImage: preview)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 50, height: 50)
-                            .clipped()
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.gray.opacity(0.4), lineWidth: 1)
-                            )
-                            .allowsHitTesting(false)
-                        Button {
-                            withAnimation { pendingImage = nil }
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(.white)
-                                .background(Color.black.opacity(0.4))
-                                .clipShape(Circle())
-                        }
-                        .offset(x: 6, y: -6)
-                    }
-                }
-                
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
-                .background(.clear)
-                .offset(x: 0, y: -80)
-            }
-            
+            PendingImage(pendingImage: $pendingImage)
         }
         .overlay(alignment: .bottomLeading) {
-            if showAttachmentMenu {                ZStack(alignment: .bottomLeading) {
-                Color.black.opacity(0.35)
-                    .ignoresSafeArea()
-                    .transition(.opacity)
-                    .onTapGesture {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
-                            showAttachmentMenu = false
-                        }
-                    }
-                
-                VStack(alignment: .leading, spacing: 10) {
-                    Button {
-                        showImagePicker = true
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) { showAttachmentMenu = false }
-                    } label: {
-                        Label("사진", systemImage: "photo.on.rectangle")
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 12)
-                            .frame(maxWidth: 160, alignment: .leading)
-                            .background(.clear)
-                            .cornerRadius(10)
-                    }
-                    
-                    Button {
-                        showCamera = true
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) { showAttachmentMenu = false }
-                    } label: {
-                        Label("카메라", systemImage: "camera")
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 12)
-                            .frame(maxWidth: 160, alignment: .leading)
-                            .background(.clear)
-                            .cornerRadius(10)
-                    }
-                    
-                }
-                .font(.subheadline.bold())
-                .foregroundColor(AppColors.brandOrange)
-                .background(AppColors.brandBackground)
-                .padding(.leading, 16)
-                .padding(.bottom, 80)
-                .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
-                .cornerRadius(16)
-                .transition(
-                    .asymmetric(
-                        insertion: .move(edge: .bottom).combined(with: .opacity),
-                        removal: .move(edge: .bottom).combined(with: .opacity)
-                    )
+            if showAttachmentMenu {
+                AttachmentMenu(
+                    showAttachmentMenu: $showAttachmentMenu,
+                    showImagePicker: $showImagePicker,
+                    showCamera: $showCamera
                 )
             }
-            .zIndex(10)
+        }
+        .overlay(alignment: .bottomTrailing) {
+            if !isAtBottom {
+                Button {
+                    withAnimation {
+                        NotificationCenter.default.post(name: .scrollToBottom, object: nil)
+                    }
+                } label: {
+                    Image(systemName: "arrow.down.circle.fill")
+                        .font(.system(size: 28))
+                        .foregroundColor(.blue)
+                        .padding()
+                        .background(.ultraThinMaterial, in: Circle())
+                }
+                .padding(.trailing, 16)
+                .padding(.bottom, 80)
             }
         }
         .alert("실기기에서만 동작합니다", isPresented: $showCallAlert) {
             Button("확인", role: .cancel) { }
         }
         .ignoresSafeArea(edges: .bottom)
-        
+        // 이미지 선택
         .sheet(isPresented: $showImagePicker) {
-            
             ImagePickerView(sourceType: .photoLibrary, selectedImage: $selectedImage)
                 .onChange(of: selectedImage) { _, newValue in
                     if let img = newValue {
@@ -485,9 +114,8 @@ struct ChatRoomView: View {
                         selectedImage = nil
                     }
                 }
-            
         }
-        
+        // 카메라 열기
         .fullScreenCover(isPresented: $showCamera) {
             ImagePickerView(sourceType: .camera, selectedImage: $selectedImage)
                 .ignoresSafeArea()
@@ -498,11 +126,13 @@ struct ChatRoomView: View {
                     }
                 }
         }
+        
+        // 키보드 이벤트 감지
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillChangeFrameNotification)) { notification in
             guard let userInfo = notification.userInfo,
                   let endFrame = (userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue,
                   let duration = userInfo[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double,
-                  let curveRaw = userInfo[UIResponder.keyboardAnimationCurveUserInfoKey] as? UInt else { return }
+                  let _ = userInfo[UIResponder.keyboardAnimationCurveUserInfoKey] as? UInt else { return }
             let keyboardVisibleHeight = max(0, UIScreen.main.bounds.height - endFrame.origin.y)
             withAnimation(Animation.easeInOut(duration: duration)) {
                 keyboardHeight = keyboardVisibleHeight
@@ -599,11 +229,11 @@ struct ChatRoomView: View {
     private func callSeller() {
         let rawNumber = seller.phoneNumber.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let url = URL(string: "tel://\(rawNumber)") else { return }
-        #if targetEnvironment(simulator)
+#if targetEnvironment(simulator)
         showCallAlert = true
-        #else
+#else
         openURL(url)
-        #endif
+#endif
     }
     
     private func formatTime(_ date: Date) -> String {
@@ -612,47 +242,6 @@ struct ChatRoomView: View {
         return formatter.string(from: date)
     }
 }
-
-struct MessageStatusView: View {
-    let status: MessageStatus
-    let timestamp: Date
-    
-    var body: some View {
-        HStack(spacing: 4) {
-            //            Text(formatTime(timestamp))
-            //                .foregroundColor(.white.opacity(0.5))
-            //                .font(.caption2)
-            
-            switch status {
-            case .sent:
-                Image(systemName: "checkmark")
-                    .foregroundColor(.gray)
-                    .font(.caption2)
-            case .delivered:
-                Image(systemName: "checkmark")
-                    .foregroundColor(.white.opacity(0.6))
-                    .font(.caption2)
-            case .read:
-                Image(systemName: "checkmark")
-                    .foregroundColor(AppColors.brandLightGreen)
-                    .font(.caption2)
-                    .padding(.bottom,2)
-            }
-        }
-    }
-    
-    private func formatTime(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
-        return formatter.string(from: date)
-    }
-}
-
-
-
-
-
-
 // MARK: - Preview
 #Preview {
     ChatRoomView(
@@ -661,3 +250,7 @@ struct MessageStatusView: View {
     )
 }
 
+
+extension Notification.Name {
+    static let scrollToBottom = Notification.Name("scrollToBottom")
+}

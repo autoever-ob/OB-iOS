@@ -8,6 +8,9 @@
 import SwiftUI
 
 struct ChatHeader: View {
+    
+    @Binding var showCallAlert: Bool
+    
     let seller: ChatSeller
     var onBack: () -> Void
     var onCall: () -> Void
