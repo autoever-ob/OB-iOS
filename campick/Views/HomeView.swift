@@ -9,9 +9,8 @@ import SwiftUI
 
 struct HomeView: View {
     @State private var showSlideMenu = false
-    
+
     var body: some View {
-        NavigationStack {
             ZStack {
                 AppColors.brandBackground
                     .ignoresSafeArea()
@@ -239,7 +238,6 @@ struct HomeView: View {
                 }
             }
             .animation(.easeInOut(duration: 0.3), value: showSlideMenu)
-        }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
     }
@@ -372,7 +370,9 @@ struct TabItem: View {
 
 struct SlideMenu: View {
     @Binding var showSlideMenu: Bool
-    
+    @State private var navigateToProfile = false
+    @StateObject private var userState = UserState.shared
+
     var body: some View {
         HStack {
             Spacer()
@@ -403,20 +403,23 @@ struct SlideMenu: View {
                                     .resizable()
                                     .frame(width: 40, height: 40)
                                     .clipShape(Circle())
-                                
+
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text("사용자님")
+                                    Text(userState.name.isEmpty ? "사용자님" : userState.name)
                                         .font(.system(size: 14, weight: .heavy))
                                         .foregroundColor(.white)
-                                    Text("캠핑카 애호가")
+                                    Text(userState.nickName.isEmpty ? "캠핑카 애호가" : userState.nickName)
                                         .font(.system(size: 11))
                                         .foregroundColor(.white.opacity(0.6))
                                 }
                                 .padding(.leading, 2)
                             }
                             .padding(.bottom,1)
-                            
-                            Button(action: { /* 프로필 화면 이동 */ }) {
+
+                            Button(action: {
+                                showSlideMenu = false
+                                navigateToProfile = true
+                            }) {
                                 Text("프로필 보기")
                                     .font(.system(size: 12, weight:.heavy))
                                     .frame(maxWidth: .infinity)
@@ -463,6 +466,9 @@ struct SlideMenu: View {
             .frame(width: 280)
             .background(Color(red: 0.043, green: 0.129, blue: 0.102))
             .ignoresSafeArea()
+        }
+        .navigationDestination(isPresented: $navigateToProfile) {
+            ProfileView(userId: userState.memberId, isOwnProfile: true)
         }
     }
 }
