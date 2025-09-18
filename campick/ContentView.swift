@@ -8,10 +8,23 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var userState = UserState.shared
+
     var body: some View {
-        NavigationStack {
-            HomeView()
+        Group {
+            if userState.isLoggedIn {
+                NavigationStack {
+                    HomeView()
+                }
+                .id("loggedIn")
+            } else {
+                NavigationStack {
+                    LoginView()
+                }
+                .id("loggedOut")
+            }
         }
+        .id(userState.isLoggedIn)
     }
 }
 
