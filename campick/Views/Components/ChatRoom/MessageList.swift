@@ -17,9 +17,10 @@ private struct ViewOffsetKey: PreferenceKey {
 struct MessageList: View {
     @Binding var messages: [ChatMessage]
     @Binding var isTyping: Bool
-    @Binding var isAtBottom: Bool
+    @State private var isAtBottom: Bool = true
     let bottomThreshold: CGFloat
     @State private var didScrollToBottomInitially = false
+    @State private var scrollProxy: ScrollViewProxy?
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -54,6 +55,7 @@ struct MessageList: View {
             }
             .coordinateSpace(name: "scroll")
             .onAppear {
+                scrollProxy = proxy
                 // 처음 진입 시 1회만 바닥으로 스크롤
                 guard !didScrollToBottomInitially else { return }
                 didScrollToBottomInitially = true
@@ -73,12 +75,39 @@ struct MessageList: View {
                     }
                 }
             }
-            .onPreferenceChange(ViewOffsetKey.self) { _ in
-                // 바닥 여부 판단을 위해 스크롤 위치를 업데이트
-                // 간단한 방식: 항상 마지막 메시지로 스크롤했을 때는 바닥이라고 가정
-                // 더 정교한 계산이 필요하면 스크롤 오프셋 계산 로직을 추가하세요.
+            .onPreferenceChange(ViewOffsetKey.self) { bottomMaxY in
+                let visibleBottom = UIScreen.main.bounds.height
+                let distance = visibleBottom - bottomMaxY
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isAtBottom = distance >= 0 && distance <= bottomThreshold
+                }
             }
         }
+        .overlay(alignment: .bottomTrailing,
+            content: {
+            Group {
+                if !isAtBottom {
+                    Button(action: {
+                        if let proxy = scrollProxy {
+                            withAnimation(.easeInOut) {
+                                proxy.scrollTo("bottom-anchor", anchor: .bottom)
+                            }
+                        }
+                    }) {
+                        Image(systemName: "arrow.down.circle.fill")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(.white)
+                            .padding(12)
+                            .background(AppColors.brandOrange.opacity(0.8))
+                            .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 2)
+                    }
+                    .padding(.trailing, 16)
+                    .padding(.bottom, 16)
+                    .transition(.opacity.combined(with: .scale))
+                }
+            }
+        })
     }
 
     private func scrollToBottom(proxy: ScrollViewProxy, animated: Bool) {
@@ -210,3 +239,4 @@ struct MessageStat: View {
         }
     }
 }
+
