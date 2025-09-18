@@ -17,6 +17,7 @@ enum MessageStatus {
 struct ChatMessage: Identifiable, Hashable {
     let id: String
     let text: String
+    let image: UIImage?
     let timestamp: Date
     let isMyMessage: Bool
     let type: ChatMessageType
@@ -25,6 +26,27 @@ struct ChatMessage: Identifiable, Hashable {
     init(id: String, text: String, timestamp: Date, isMyMessage: Bool, type: ChatMessageType, status: MessageStatus = .sent) {
         self.id = id
         self.text = text
+        self.timestamp = timestamp
+        self.isMyMessage = isMyMessage
+        self.type = type
+        self.status = status
+        self.image = nil
+    }
+    
+    init(id: String, image: UIImage, timestamp: Date, isMyMessage: Bool, type: ChatMessageType, status: MessageStatus = .sent) {
+        self.id = id
+        self.text = ""
+        self.image = image
+        self.timestamp = timestamp
+        self.isMyMessage = isMyMessage
+        self.type = type
+        self.status = status
+    }
+    
+    init(id: String, text: String, image: UIImage, timestamp: Date, isMyMessage: Bool, type: ChatMessageType, status: MessageStatus = .sent) {
+        self.id = id
+        self.text = text
+        self.image = image
         self.timestamp = timestamp
         self.isMyMessage = isMyMessage
         self.type = type
@@ -118,6 +140,7 @@ struct ChatRoomView: View {
     @State private var showImagePicker = false
     @State private var showCamera = false
     @State private var selectedImage: UIImage? = nil
+    @State private var pendingImage: UIImage? = nil
     
     var body: some View {
         VStack(spacing: 0) {
@@ -228,11 +251,29 @@ struct ChatRoomView: View {
                                         if msg.isMyMessage {
                                             Spacer()
                                             VStack(alignment: .trailing) {
-                                                Text(msg.text)
-                                                    .padding()
-                                                    .background(AppColors.brandOrange)
-                                                    .foregroundColor(.white)
-                                                    .cornerRadius(16)
+                                                if let img = msg.image, msg.type == .image {
+                                                    VStack(alignment: .trailing, spacing: 6) {
+                                                        Image(uiImage: img)
+                                                            .resizable()
+                                                            .scaledToFill()
+                                                            .frame(maxWidth: 240, maxHeight: 240)
+                                                            .clipped()
+                                                            .cornerRadius(16)
+                                                        if !msg.text.isEmpty {
+                                                            Text(msg.text)
+                                                                .padding()
+                                                                .background(AppColors.brandOrange)
+                                                                .foregroundColor(.white)
+                                                                .cornerRadius(16)
+                                                        }
+                                                    }
+                                                } else {
+                                                    Text(msg.text)
+                                                        .padding()
+                                                        .background(AppColors.brandOrange)
+                                                        .foregroundColor(.white)
+                                                        .cornerRadius(16)
+                                                }
                                                 HStack(spacing: 4) {
                                                     Text(formatTime(msg.timestamp))
                                                         .foregroundColor(.white.opacity(0.5))
@@ -251,18 +292,39 @@ struct ChatRoomView: View {
                                                 .clipShape(Circle())
                                                 .padding(.bottom,60)
                                             VStack(alignment: .leading) {
-                                                Text(msg.text)
-                                                    .padding()
-                                                    .background(.ultraThinMaterial.opacity(0.2))
-                                                    .overlay(
-                                                        RoundedRectangle(cornerRadius: 16)
-                                                            .stroke(Color.gray.opacity(0.4), lineWidth: 1)
-                                                    )
-                                                    .foregroundColor(.white)
-                                                    .cornerRadius(16)
-                                                Text(formatTime(msg.timestamp))
-                                                    .foregroundColor(.white.opacity(0.5))
-                                                    .font(.caption2)
+                                                if let img = msg.image, msg.type == .image {
+                                                    VStack(alignment: .leading, spacing: 6) {
+                                                        // 이미지 단독 (테두리/버블 없이)
+                                                        Image(uiImage: img)
+                                                            .resizable()
+                                                            .scaledToFill()
+                                                            .frame(maxWidth: 240, maxHeight: 240)
+                                                            .clipped()
+                                                            .cornerRadius(16)
+                                                        // 캡션이 있으면 텍스트 버블만 별도로
+                                                        if !msg.text.isEmpty {
+                                                            Text(msg.text)
+                                                                .padding()
+                                                                .background(.ultraThinMaterial.opacity(0.2))
+                                                                .overlay(
+                                                                    RoundedRectangle(cornerRadius: 16)
+                                                                        .stroke(Color.gray.opacity(0.4), lineWidth: 1)
+                                                                )
+                                                                .foregroundColor(.white)
+                                                                .cornerRadius(16)
+                                                        }
+                                                    }
+                                                } else {
+                                                    Text(msg.text)
+                                                        .padding()
+                                                        .background(.ultraThinMaterial.opacity(0.2))
+                                                        .overlay(
+                                                            RoundedRectangle(cornerRadius: 16)
+                                                                .stroke(Color.gray.opacity(0.4), lineWidth: 1)
+                                                        )
+                                                        .foregroundColor(.white)
+                                                        .cornerRadius(16)
+                                                }
                                             }
                                             .frame(maxWidth: 300, alignment: .leading)
                                             Spacer()
@@ -326,6 +388,18 @@ struct ChatRoomView: View {
                                 }
                             }
                         }
+                        .onChange(of: pendingImage) { _, newValue in
+                            guard newValue != nil else { return }
+
+                            withAnimation {
+                                proxy.scrollTo("bottom-anchor", anchor: .bottom)
+                            }
+                            DispatchQueue.main.async {
+                                withAnimation(.easeInOut(duration: 0.01)) {
+                                    isAtBottom = true
+                                }
+                            }
+                        }
                         .simultaneousGesture(DragGesture().onChanged { _ in
                             isAtBottom = false
                         })
@@ -363,7 +437,6 @@ struct ChatRoomView: View {
             }
             .background(AppColors.brandBackground)
             
-            
             // MARK: - 입력창
             HStack {
                 Button {
@@ -388,10 +461,10 @@ struct ChatRoomView: View {
                     Image(systemName: "paperplane.fill")
                         .foregroundColor(.white)
                         .padding(10)
-                        .background(newMessage.isEmpty ? Color.white.opacity(0.2) : AppColors.brandOrange)
+                        .background((newMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && pendingImage == nil) ? Color.white.opacity(0.2) : AppColors.brandOrange)
                         .clipShape(Circle())
                 }
-                .disabled(newMessage.isEmpty)
+                .disabled(newMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && pendingImage == nil)
             }
             .padding()
             .background(
@@ -404,6 +477,41 @@ struct ChatRoomView: View {
                         alignment: .top
                     )
             )
+        }
+        .overlay(alignment: .bottomLeading) {
+            if let preview = pendingImage {
+                HStack(spacing: 12) {
+                    ZStack(alignment: .topTrailing) {
+                        Image(uiImage: preview)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 50, height: 50)
+                            .clipped()
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.gray.opacity(0.4), lineWidth: 1)
+                            )
+                            .allowsHitTesting(false)
+                        Button {
+                            withAnimation { pendingImage = nil }
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(.white)
+                                .background(Color.black.opacity(0.4))
+                                .clipShape(Circle())
+                        }
+                        .offset(x: 6, y: -6)
+                    }
+                }
+                
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+                .background(.clear)
+                .offset(x: 0, y: -80)
+            }
+             
         }
         .overlay(alignment: .bottomLeading) {
             if showAttachmentMenu {                ZStack(alignment: .bottomLeading) {
@@ -465,26 +573,104 @@ struct ChatRoomView: View {
         .ignoresSafeArea(edges: .bottom)
         .sheet(isPresented: $showImagePicker) {
             ImagePickerView(sourceType: .photoLibrary, selectedImage: $selectedImage)
+                .onChange(of: selectedImage) { _, newValue in
+                    if let img = newValue {
+                        pendingImage = img
+                        selectedImage = nil
+                    }
+                }
                }
         .fullScreenCover(isPresented: $showCamera) {
             ImagePickerView(sourceType: .camera, selectedImage: $selectedImage)
-                .ignoresSafeArea() // 카메라가 화면 전체 덮도록
+                .ignoresSafeArea()
+                .onChange(of: selectedImage) { _, newValue in
+                    if let img = newValue {
+                        pendingImage = img
+                        selectedImage = nil
+                    }
+                }
         }
     }
     
     // MARK: - 메서드
     private func sendMessage() {
-        guard !newMessage.isEmpty else { return }
+        if let img = pendingImage {
+            let trimmed = newMessage.trimmingCharacters(in: .whitespacesAndNewlines)
+            let msg: ChatMessage
+            if !trimmed.isEmpty {
+                msg = ChatMessage(id: UUID().uuidString, text: trimmed, image: img, timestamp: Date(), isMyMessage: true, type: .image)
+            } else {
+                msg = ChatMessage(id: UUID().uuidString, image: img, timestamp: Date(), isMyMessage: true, type: .image)
+            }
+            messages.append(msg)
+            pendingImage = nil
+            newMessage = ""
+            simulateAutoReply()
+            return
+        }
+
+        guard !newMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         let msg = ChatMessage(id: UUID().uuidString, text: newMessage, timestamp: Date(), isMyMessage: true, type: .text)
         messages.append(msg)
         newMessage = ""
-        
-        // 응답 시뮬레이션
+        simulateAutoReply()
+    }
+    
+    private func simulateAutoReply() {
         isTyping = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            let response = ChatMessage(id: UUID().uuidString, text: "네, 알겠습니다!", timestamp: Date(), isMyMessage: false, type: .text)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            defer { isTyping = false }
+
+            // 50% 확률로 이미지 응답, 아니면 텍스트 응답
+            let sendImage = Bool.random()
+            if sendImage {
+                // 번들 이미지 시도
+                let candidateNames = ["testImage1", "testImage2", "testImage3"]
+                var pickedImage: UIImage? = nil
+                for name in candidateNames {
+                    if let ui = UIImage(named: name) { pickedImage = ui; break }
+                }
+
+                if let img = pickedImage ?? makePlaceholderImage(size: CGSize(width: 300, height: 200), color: .systemGray3) {
+                    // 50% 확률로 캡션 포함
+                    let captions = ["방금 찍은 사진이에요.", "이 옵션은 어떠세요?", "실물 컨디션 좋아요!", "참고 사진 드려요."]
+                    let caption = Bool.random() ? (captions.randomElement() ?? "") : ""
+
+                    let reply: ChatMessage
+                    if caption.isEmpty {
+                        reply = ChatMessage(id: UUID().uuidString, image: img, timestamp: Date(), isMyMessage: false, type: .image)
+                    } else {
+                        reply = ChatMessage(id: UUID().uuidString, text: caption, image: img, timestamp: Date(), isMyMessage: false, type: .image)
+                    }
+                    messages.append(reply)
+                    return
+                }
+            }
+
+            // 기본 텍스트 응답
+            let texts = [
+                "네, 알겠습니다!",
+                "확인해보고 다시 연락드릴게요.",
+                "가능한 시간 알려주세요.",
+                "사진 더 필요하시면 말씀 주세요.",
+                "시운전도 가능합니다."
+            ]
+            let response = ChatMessage(id: UUID().uuidString, text: texts.randomElement() ?? "네, 알겠습니다!", timestamp: Date(), isMyMessage: false, type: .text)
             messages.append(response)
-            isTyping = false
+        }
+    }
+    
+    private func makePlaceholderImage(size: CGSize, color: UIColor) -> UIImage? {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = UIScreen.main.scale
+        let renderer = UIGraphicsImageRenderer(size: size, format: format)
+        return renderer.image { ctx in
+            color.setFill()
+            ctx.fill(CGRect(origin: .zero, size: size))
+            // Optionally add a simple icon-like mark
+            UIColor.white.withAlphaComponent(0.3).setFill()
+            let circleRect = CGRect(x: size.width*0.4, y: size.height*0.35, width: size.width*0.2, height: size.width*0.2)
+            ctx.cgContext.fillEllipse(in: circleRect)
         }
     }
     
