@@ -23,7 +23,6 @@ struct ChatRoomView: View {
     @State private var isTyping: Bool = false
     @State private var didEnterInitially = false
     @State private var showCallAlert = false
-    private let bottomThreshold: CGFloat = 40
     
     @State private var showAttachmentMenu = false
     @State private var showImagePicker = false
@@ -46,7 +45,6 @@ struct ChatRoomView: View {
             MessageList(
                 messages: $messages,
                 isTyping: $isTyping,
-                bottomThreshold: bottomThreshold
             )
             
             // 입력창

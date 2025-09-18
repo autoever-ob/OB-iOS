@@ -14,13 +14,28 @@ private struct ViewOffsetKey: PreferenceKey {
     }
 }
 
+private struct BottomAnchorPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = .zero
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
+private struct ContainerBottomPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = .zero
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
 struct MessageList: View {
     @Binding var messages: [ChatMessage]
     @Binding var isTyping: Bool
     @State private var isAtBottom: Bool = true
-    let bottomThreshold: CGFloat
+    private let bottomThreshold: CGFloat = 80
     @State private var didScrollToBottomInitially = false
     @State private var scrollProxy: ScrollViewProxy?
+    @State private var containerMaxY: CGFloat = .zero
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -35,7 +50,18 @@ struct MessageList: View {
                     }
 
                     // 바닥 앵커
-                    Color.clear.frame(height: 1).id("bottom-anchor")
+                    Color.clear
+                        .frame(height: 1)
+                        .id("bottom-anchor")
+                        .background(
+                            GeometryReader { geo in
+                                Color.clear
+                                    .preference(
+                                        key: BottomAnchorPreferenceKey.self,
+                                        value: geo.frame(in: .named("scroll")).maxY
+                                    )
+                            }
+                        )
 
                     if isTyping {
                         HStack {
@@ -45,14 +71,16 @@ struct MessageList: View {
                     }
                 }
                 .padding()
-                // 현재 스크롤의 바닥 여유를 측정해서 isAtBottom 업데이트
-                .background(
-                    GeometryReader { geo in
-                        Color.clear
-                            .preference(key: ViewOffsetKey.self, value: geo.frame(in: .named("scroll")).maxY)
-                    }
-                )
             }
+            .overlay(
+                GeometryReader { geo in
+                    Color.clear
+                        .preference(
+                            key: ContainerBottomPreferenceKey.self,
+                            value: geo.frame(in: .named("scroll")).maxY
+                        )
+                }
+            )
             .coordinateSpace(name: "scroll")
             .onAppear {
                 scrollProxy = proxy
@@ -75,9 +103,11 @@ struct MessageList: View {
                     }
                 }
             }
-            .onPreferenceChange(ViewOffsetKey.self) { bottomMaxY in
-                let visibleBottom = UIScreen.main.bounds.height
-                let distance = visibleBottom - bottomMaxY
+            .onPreferenceChange(ContainerBottomPreferenceKey.self) { value in
+                containerMaxY = value
+            }
+            .onPreferenceChange(BottomAnchorPreferenceKey.self) { bottomMaxY in
+                let distance = containerMaxY - bottomMaxY
                 withAnimation(.easeInOut(duration: 0.2)) {
                     isAtBottom = distance >= 0 && distance <= bottomThreshold
                 }
@@ -107,6 +137,7 @@ struct MessageList: View {
                     .transition(.opacity.combined(with: .scale))
                 }
             }
+            .animation(.easeInOut, value: isAtBottom)
         })
     }
 
