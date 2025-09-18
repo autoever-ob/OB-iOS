@@ -1,4 +1,6 @@
 import SwiftUI
+import PhotosUI
+
 
 // MARK: - 모델
 
@@ -21,13 +23,13 @@ struct ChatMessage: Identifiable, Hashable {
     let status: MessageStatus?
     
     init(id: String, text: String, timestamp: Date, isMyMessage: Bool, type: ChatMessageType, status: MessageStatus = .sent) {
-            self.id = id
-            self.text = text
-            self.timestamp = timestamp
-            self.isMyMessage = isMyMessage
-            self.type = type
-            self.status = status
-        }
+        self.id = id
+        self.text = text
+        self.timestamp = timestamp
+        self.isMyMessage = isMyMessage
+        self.type = type
+        self.status = status
+    }
 }
 
 
@@ -52,7 +54,6 @@ struct ChatVehicle {
 // MARK: - 타이핑 인디케이터
 struct TypingIndicator: View {
     @State private var animate = false
-    
     var body: some View {
         HStack(spacing: 6) {
             ForEach(0..<3) { i in
@@ -112,7 +113,12 @@ struct ChatRoomView: View {
     @State private var didEnterInitially = false
     @State private var showCallAlert = false
     private let bottomThreshold: CGFloat = 40
-
+    
+    @State private var showAttachmentMenu = false
+    @State private var showImagePicker = false
+    @State private var showCamera = false
+    @State private var selectedImage: UIImage? = nil
+    
     var body: some View {
         VStack(spacing: 0) {
             // MARK: - 헤더
@@ -361,7 +367,9 @@ struct ChatRoomView: View {
             // MARK: - 입력창
             HStack {
                 Button {
-                    
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
+                        showAttachmentMenu.toggle()
+                    }
                 } label: {
                     Image(systemName: "plus")
                         .foregroundColor(.white)
@@ -397,10 +405,71 @@ struct ChatRoomView: View {
                     )
             )
         }
+        .overlay(alignment: .bottomLeading) {
+            if showAttachmentMenu {                ZStack(alignment: .bottomLeading) {
+                    Color.black.opacity(0.35)
+                        .ignoresSafeArea()
+                        .transition(.opacity)
+                        .onTapGesture {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
+                                showAttachmentMenu = false
+                            }
+                        }
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Button {
+                            showImagePicker = true
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) { showAttachmentMenu = false }
+                        } label: {
+                            Label("사진", systemImage: "photo.on.rectangle")
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 12)
+                                .frame(maxWidth: 160, alignment: .leading)
+                                .background(.clear)
+                                .cornerRadius(10)
+                        }
+
+                        Button {
+                            showCamera = true
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) { showAttachmentMenu = false }
+                        } label: {
+                            Label("카메라", systemImage: "camera")
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 12)
+                                .frame(maxWidth: 160, alignment: .leading)
+                                .background(.clear)
+                                .cornerRadius(10)
+                        }
+
+                    }
+                    .font(.subheadline.bold())
+                    .foregroundColor(AppColors.brandOrange)
+                    .background(AppColors.brandBackground)
+                    .padding(.leading, 16)
+                    .padding(.bottom, 80)
+                    .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+                    .cornerRadius(16)
+                    .transition(
+                        .asymmetric(
+                            insertion: .move(edge: .bottom).combined(with: .opacity),
+                            removal: .move(edge: .bottom).combined(with: .opacity)
+                        )
+                    )
+                }
+                .zIndex(10)
+            }
+        }
         .alert("실기기에서만 동작합니다", isPresented: $showCallAlert) {
             Button("확인", role: .cancel) { }
         }
         .ignoresSafeArea(edges: .bottom)
+        .sheet(isPresented: $showImagePicker) {
+            ImagePickerView(sourceType: .photoLibrary, selectedImage: $selectedImage)
+               }
+        .fullScreenCover(isPresented: $showCamera) {
+            ImagePickerView(sourceType: .camera, selectedImage: $selectedImage)
+                .ignoresSafeArea() // 카메라가 화면 전체 덮도록
+        }
     }
     
     // MARK: - 메서드
@@ -422,11 +491,11 @@ struct ChatRoomView: View {
     private func callSeller() {
         let rawNumber = seller.phoneNumber.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let url = URL(string: "tel://\(rawNumber)") else { return }
-    #if targetEnvironment(simulator)
+#if targetEnvironment(simulator)
         showCallAlert = true
-    #else
+#else
         openURL(url)
-    #endif
+#endif
     }
     
     private func formatTime(_ date: Date) -> String {
@@ -442,9 +511,9 @@ struct MessageStatusView: View {
     
     var body: some View {
         HStack(spacing: 4) {
-//            Text(formatTime(timestamp))
-//                .foregroundColor(.white.opacity(0.5))
-//                .font(.caption2)
+            //            Text(formatTime(timestamp))
+            //                .foregroundColor(.white.opacity(0.5))
+            //                .font(.caption2)
             
             switch status {
             case .sent:
