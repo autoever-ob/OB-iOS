@@ -12,6 +12,8 @@ struct ProfileView: View {
     let isOwnProfile: Bool
 
     @StateObject private var viewModel: ProfileViewViewModel
+    @StateObject private var userState = UserState.shared
+    @Environment(\.dismiss) private var dismiss
 
     init(userId: String, isOwnProfile: Bool) {
         self.userId = userId
@@ -83,6 +85,8 @@ struct ProfileView: View {
                             onConfirm: {
                                 viewModel.showLogoutModal = false
                                 viewModel.logout()
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                }
                             },
                             onCancel: {
                                 viewModel.showLogoutModal = false
