@@ -21,7 +21,6 @@ struct ChatRoomView: View {
     
     @State private var newMessage: String = ""
     @State private var isTyping: Bool = false
-    @State private var isAtBottom: Bool = true
     @State private var didEnterInitially = false
     @State private var showCallAlert = false
     private let bottomThreshold: CGFloat = 40
@@ -47,7 +46,6 @@ struct ChatRoomView: View {
             MessageList(
                 messages: $messages,
                 isTyping: $isTyping,
-                isAtBottom: $isAtBottom,
                 bottomThreshold: bottomThreshold
             )
             
@@ -82,23 +80,6 @@ struct ChatRoomView: View {
                     showImagePicker: $showImagePicker,
                     showCamera: $showCamera
                 )
-            }
-        }
-        .overlay(alignment: .bottomTrailing) {
-            if !isAtBottom {
-                Button {
-                    withAnimation {
-                        NotificationCenter.default.post(name: .scrollToBottom, object: nil)
-                    }
-                } label: {
-                    Image(systemName: "arrow.down.circle.fill")
-                        .font(.system(size: 28))
-                        .foregroundColor(.blue)
-                        .padding()
-                        .background(.ultraThinMaterial, in: Circle())
-                }
-                .padding(.trailing, 16)
-                .padding(.bottom, 80)
             }
         }
         .alert("실기기에서만 동작합니다", isPresented: $showCallAlert) {
