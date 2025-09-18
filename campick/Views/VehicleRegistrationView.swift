@@ -24,7 +24,6 @@ struct VehicleRegistrationView: View {
     @State private var vehicleOptions: [VehicleOption] = defaultVehicleOptions
     @State private var showingVehicleTypePicker = false
     @State private var showingImagePicker = false
-    @State private var showingCamera = false
     @State private var showingOptionsPicker = false
     @State private var errors: [String: String] = [:]
     @State private var isSubmitting = false
@@ -39,10 +38,12 @@ struct VehicleRegistrationView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                VehicleRegistrationHeader(onCameraAction: {
-                    showingCamera = true
-                })
-                ScrollView {
+                TopBarView(title: "차량매물등록") {
+                    dismiss()
+                }
+
+                GeometryReader { geometry in
+                    ScrollView {
                     VStack(spacing: 24) {
                         VehicleRegistrationTitleSection()
 
@@ -52,9 +53,6 @@ struct VehicleRegistrationView: View {
                             showingImagePicker: $showingImagePicker,
                             errors: $errors
                         )
-                        .onChange(of: selectedPhotos) { _, newItems in
-                            loadSelectedPhotos(newItems)
-                        }
 
                         VStack(alignment: .leading, spacing: 4) {
                             FieldLabel(text: "매물 제목")
@@ -124,7 +122,7 @@ struct VehicleRegistrationView: View {
 
                         VehicleInputField(
                             title: "차량 번호",
-                            placeholder: "차량 번호를 입력하세요",
+                            placeholder: "123가4567",
                             text: $plateHash,
                             errors: errors,
                             errorKey: "plateHash"
@@ -152,6 +150,9 @@ struct VehicleRegistrationView: View {
                     }
                     .padding(.horizontal, 16)
                     .padding(.bottom, 32)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: geometry.size.height)
                 }
             }
         }
@@ -168,14 +169,6 @@ struct VehicleRegistrationView: View {
                 showingOptionsPicker: $showingOptionsPicker
             )
         }
-        .fullScreenCover(isPresented: $showingCamera) {
-            CameraView { image in
-                if let image = image {
-                    addImage(image)
-                }
-                showingCamera = false
-            }
-        }
         .alert("등록 완료", isPresented: $showingSuccessAlert) {
             Button("확인") {
                 dismiss()
@@ -188,6 +181,8 @@ struct VehicleRegistrationView: View {
         } message: {
             Text(alertMessage)
         }
+        .navigationBarHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
     }
 
     private func formatNumber(_ value: String) -> String {
@@ -201,29 +196,7 @@ struct VehicleRegistrationView: View {
         return ""
     }
 
-    private func loadSelectedPhotos(_ items: [PhotosPickerItem]) {
-        for item in items {
-            item.loadTransferable(type: Data.self) { result in
-                switch result {
-                case .success(let data):
-                    if let data = data, let uiImage = UIImage(data: data) {
-                        DispatchQueue.main.async {
-                            addImage(uiImage)
-                        }
-                    }
-                case .failure(let error):
-                    print("Error loading image: \(error)")
-                }
-            }
-        }
-        selectedPhotos.removeAll()
-    }
 
-    private func addImage(_ image: UIImage) {
-        let newImage = VehicleImage(image: image, isMain: vehicleImages.isEmpty)
-        vehicleImages.append(newImage)
-        errors["images"] = nil
-    }
 
     private func handleSubmit() {
         var newErrors: [String: String] = [:]
@@ -353,44 +326,6 @@ struct VehicleRegistrationView: View {
             alertMessage = "데이터 처리 중 오류가 발생했습니다."
             showingErrorAlert = true
             isSubmitting = false
-        }
-    }
-}
-
-struct CameraView: UIViewControllerRepresentable {
-    let onImageCaptured: (UIImage?) -> Void
-
-    func makeUIViewController(context: Context) -> UIImagePickerController {
-        let picker = UIImagePickerController()
-        picker.delegate = context.coordinator
-        picker.sourceType = .camera
-        picker.allowsEditing = false
-        return picker
-    }
-
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-
-    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-        let parent: CameraView
-
-        init(_ parent: CameraView) {
-            self.parent = parent
-        }
-
-        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-            if let image = info[.originalImage] as? UIImage {
-                parent.onImageCaptured(image)
-            } else {
-                parent.onImageCaptured(nil)
-            }
-        }
-
-        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            parent.onImageCaptured(nil)
         }
     }
 }
