@@ -99,8 +99,8 @@ struct Chip: View {
     }
 }
 
-private struct AnyShape: Shape {
-    private let pathBuilder: (CGRect) -> Path
+private struct AnyShape: Shape, @unchecked Sendable {
+    private let pathBuilder: @Sendable (CGRect) -> Path
     init<S: Shape>(_ shape: S) { self.pathBuilder = { rect in shape.path(in: rect) } }
     func path(in rect: CGRect) -> Path { pathBuilder(rect) }
 }

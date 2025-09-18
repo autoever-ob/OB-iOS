@@ -9,9 +9,9 @@ enum ChatMessageType {
 }
 
 enum MessageStatus {
-    case sent      // 보냄
-    case delivered // 서버 전달
-    case read      // 상대방 읽음
+    case sent
+    case delivered
+    case read
 }
 
 struct ChatMessage: Identifiable, Hashable {
@@ -141,6 +141,7 @@ struct ChatRoomView: View {
     @State private var showCamera = false
     @State private var selectedImage: UIImage? = nil
     @State private var pendingImage: UIImage? = nil
+    @State private var keyboardHeight: CGFloat = 0
     
     var body: some View {
         VStack(spacing: 0) {
@@ -157,7 +158,7 @@ struct ChatRoomView: View {
                             .clipShape(Circle())
                     }
                     
-                    Image("park")
+                    Image("testImage1")
                         .resizable()
                         .frame(width: 40, height: 40)
                         .clipShape(Circle())
@@ -252,7 +253,7 @@ struct ChatRoomView: View {
                                             Spacer()
                                             VStack(alignment: .trailing) {
                                                 if let img = msg.image, msg.type == .image {
-                                                    VStack(alignment: .trailing, spacing: 6) {
+                                                    VStack(alignment: .trailing, spacing: 4) {
                                                         Image(uiImage: img)
                                                             .resizable()
                                                             .scaledToFill()
@@ -290,7 +291,6 @@ struct ChatRoomView: View {
                                                 .resizable()
                                                 .frame(width: 40, height: 40)
                                                 .clipShape(Circle())
-                                                .padding(.bottom,60)
                                             VStack(alignment: .leading) {
                                                 if let img = msg.image, msg.type == .image {
                                                     VStack(alignment: .leading, spacing: 6) {
@@ -330,6 +330,7 @@ struct ChatRoomView: View {
                                             Spacer()
                                         }
                                     }
+                                    .padding(.vertical, 4)
                                     .id(msg.id)
                                 }
                                 Color.clear
@@ -390,13 +391,24 @@ struct ChatRoomView: View {
                         }
                         .onChange(of: pendingImage) { _, newValue in
                             guard newValue != nil else { return }
-
+                            
                             withAnimation {
                                 proxy.scrollTo("bottom-anchor", anchor: .bottom)
                             }
                             DispatchQueue.main.async {
                                 withAnimation(.easeInOut(duration: 0.01)) {
                                     isAtBottom = true
+                                }
+                            }
+                        }
+                        .onChange(of: keyboardHeight) { _, newValue in
+                            guard newValue > 0 else { return }
+                            
+                            if isAtBottom {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                                    withAnimation {
+                                        proxy.scrollTo("bottom-anchor", anchor: .bottom)
+                                    }
                                 }
                             }
                         }
@@ -451,7 +463,9 @@ struct ChatRoomView: View {
                         .clipShape(Circle())
                 }
                 
-                TextField("메시지를 입력하세요...", text: $newMessage, onCommit: sendMessage)
+                TextField("메시지를 입력하세요...", text: $newMessage)
+                    .submitLabel(.send)
+                    .onSubmit { sendMessage() }
                     .padding(10)
                     .background(Color.white.opacity(0.1))
                     .cornerRadius(20)
@@ -478,6 +492,8 @@ struct ChatRoomView: View {
                     )
             )
         }
+        .padding(.bottom, keyboardHeight)
+        .animation(.easeInOut(duration: 0.25), value: keyboardHeight)
         .overlay(alignment: .bottomLeading) {
             if let preview = pendingImage {
                 HStack(spacing: 12) {
@@ -511,67 +527,69 @@ struct ChatRoomView: View {
                 .background(.clear)
                 .offset(x: 0, y: -80)
             }
-             
+            
         }
         .overlay(alignment: .bottomLeading) {
             if showAttachmentMenu {                ZStack(alignment: .bottomLeading) {
-                    Color.black.opacity(0.35)
-                        .ignoresSafeArea()
-                        .transition(.opacity)
-                        .onTapGesture {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
-                                showAttachmentMenu = false
-                            }
+                Color.black.opacity(0.35)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+                    .onTapGesture {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
+                            showAttachmentMenu = false
                         }
-
-                    VStack(alignment: .leading, spacing: 10) {
-                        Button {
-                            showImagePicker = true
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) { showAttachmentMenu = false }
-                        } label: {
-                            Label("사진", systemImage: "photo.on.rectangle")
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 12)
-                                .frame(maxWidth: 160, alignment: .leading)
-                                .background(.clear)
-                                .cornerRadius(10)
-                        }
-
-                        Button {
-                            showCamera = true
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) { showAttachmentMenu = false }
-                        } label: {
-                            Label("카메라", systemImage: "camera")
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 12)
-                                .frame(maxWidth: 160, alignment: .leading)
-                                .background(.clear)
-                                .cornerRadius(10)
-                        }
-
                     }
-                    .font(.subheadline.bold())
-                    .foregroundColor(AppColors.brandOrange)
-                    .background(AppColors.brandBackground)
-                    .padding(.leading, 16)
-                    .padding(.bottom, 80)
-                    .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
-                    .cornerRadius(16)
-                    .transition(
-                        .asymmetric(
-                            insertion: .move(edge: .bottom).combined(with: .opacity),
-                            removal: .move(edge: .bottom).combined(with: .opacity)
-                        )
-                    )
+                
+                VStack(alignment: .leading, spacing: 10) {
+                    Button {
+                        showImagePicker = true
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) { showAttachmentMenu = false }
+                    } label: {
+                        Label("사진", systemImage: "photo.on.rectangle")
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 12)
+                            .frame(maxWidth: 160, alignment: .leading)
+                            .background(.clear)
+                            .cornerRadius(10)
+                    }
+                    
+                    Button {
+                        showCamera = true
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) { showAttachmentMenu = false }
+                    } label: {
+                        Label("카메라", systemImage: "camera")
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 12)
+                            .frame(maxWidth: 160, alignment: .leading)
+                            .background(.clear)
+                            .cornerRadius(10)
+                    }
+                    
                 }
-                .zIndex(10)
+                .font(.subheadline.bold())
+                .foregroundColor(AppColors.brandOrange)
+                .background(AppColors.brandBackground)
+                .padding(.leading, 16)
+                .padding(.bottom, 80)
+                .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+                .cornerRadius(16)
+                .transition(
+                    .asymmetric(
+                        insertion: .move(edge: .bottom).combined(with: .opacity),
+                        removal: .move(edge: .bottom).combined(with: .opacity)
+                    )
+                )
+            }
+            .zIndex(10)
             }
         }
         .alert("실기기에서만 동작합니다", isPresented: $showCallAlert) {
             Button("확인", role: .cancel) { }
         }
         .ignoresSafeArea(edges: .bottom)
+        
         .sheet(isPresented: $showImagePicker) {
+            
             ImagePickerView(sourceType: .photoLibrary, selectedImage: $selectedImage)
                 .onChange(of: selectedImage) { _, newValue in
                     if let img = newValue {
@@ -579,7 +597,9 @@ struct ChatRoomView: View {
                         selectedImage = nil
                     }
                 }
-               }
+            
+        }
+        
         .fullScreenCover(isPresented: $showCamera) {
             ImagePickerView(sourceType: .camera, selectedImage: $selectedImage)
                 .ignoresSafeArea()
@@ -589,6 +609,23 @@ struct ChatRoomView: View {
                         selectedImage = nil
                     }
                 }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillChangeFrameNotification)) { notification in
+            guard let userInfo = notification.userInfo,
+                  let endFrame = (userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue,
+                  let duration = userInfo[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double,
+                  let curveRaw = userInfo[UIResponder.keyboardAnimationCurveUserInfoKey] as? UInt else { return }
+            let keyboardVisibleHeight = max(0, UIScreen.main.bounds.height - endFrame.origin.y)
+            withAnimation(Animation.easeInOut(duration: duration)) {
+                keyboardHeight = keyboardVisibleHeight
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { notification in
+            guard let userInfo = notification.userInfo,
+                  let duration = userInfo[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double else { return }
+            withAnimation(Animation.easeInOut(duration: duration)) {
+                keyboardHeight = 0
+            }
         }
     }
     
@@ -608,7 +645,7 @@ struct ChatRoomView: View {
             simulateAutoReply()
             return
         }
-
+        
         guard !newMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         let msg = ChatMessage(id: UUID().uuidString, text: newMessage, timestamp: Date(), isMyMessage: true, type: .text)
         messages.append(msg)
@@ -620,7 +657,7 @@ struct ChatRoomView: View {
         isTyping = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             defer { isTyping = false }
-
+            
             // 50% 확률로 이미지 응답, 아니면 텍스트 응답
             let sendImage = Bool.random()
             if sendImage {
@@ -630,12 +667,11 @@ struct ChatRoomView: View {
                 for name in candidateNames {
                     if let ui = UIImage(named: name) { pickedImage = ui; break }
                 }
-
+                
                 if let img = pickedImage ?? makePlaceholderImage(size: CGSize(width: 300, height: 200), color: .systemGray3) {
-                    // 50% 확률로 캡션 포함
                     let captions = ["방금 찍은 사진이에요.", "이 옵션은 어떠세요?", "실물 컨디션 좋아요!", "참고 사진 드려요."]
                     let caption = Bool.random() ? (captions.randomElement() ?? "") : ""
-
+                    
                     let reply: ChatMessage
                     if caption.isEmpty {
                         reply = ChatMessage(id: UUID().uuidString, image: img, timestamp: Date(), isMyMessage: false, type: .image)
@@ -646,8 +682,7 @@ struct ChatRoomView: View {
                     return
                 }
             }
-
-            // 기본 텍스트 응답
+            
             let texts = [
                 "네, 알겠습니다!",
                 "확인해보고 다시 연락드릴게요.",
@@ -667,7 +702,6 @@ struct ChatRoomView: View {
         return renderer.image { ctx in
             color.setFill()
             ctx.fill(CGRect(origin: .zero, size: size))
-            // Optionally add a simple icon-like mark
             UIColor.white.withAlphaComponent(0.3).setFill()
             let circleRect = CGRect(x: size.width*0.4, y: size.height*0.35, width: size.width*0.2, height: size.width*0.2)
             ctx.cgContext.fillEllipse(in: circleRect)
@@ -729,8 +763,8 @@ struct MessageStatusView: View {
 // MARK: - Preview
 #Preview {
     ChatRoomView(
-        seller: ChatSeller(id: "1", name: "박우진", avatar: "tiffany", isOnline: true, lastSeen: Date(),phoneNumber: "010-1234-1234"),
-        vehicle: ChatVehicle(id: "1", title: "현대 포레스트 프리미엄", price: 8900, status: "판매중", image: "https://picsum.photos/200/120?random=3")
+        seller: ChatSeller(id: "1", name: "미리보기 판매자", avatar: "placeholder", isOnline: true, lastSeen: Date(), phoneNumber: "010-0000-0000"),
+        vehicle: ChatVehicle(id: "1", title: "프리뷰 차량", price: 1234, status: "판매중", image: "")
     )
 }
 
