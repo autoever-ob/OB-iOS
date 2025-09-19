@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+@MainActor
 final class SignupFlowViewModel: ObservableObject {
     enum Step: Int { case email = 0, password, phone, nickname, complete }
 
@@ -61,10 +62,12 @@ final class SignupFlowViewModel: ObservableObject {
     @Published var email: String = ""
     @Published var showEmailCodeField = false
     @Published var emailCode: String = ""
+    @Published var emailError: String? = nil
+    @Published var isEmailSending: Bool = false
 
-    func emailOnTapVerify() { showEmailCodeField = true }
+    func emailOnTapVerify() { /* handled by sendEmailCode() */ }
     func emailOnChangeCode(_ value: String) { emailCode = value.filter { $0.isNumber } }
-    func emailNext() { if !emailCode.isEmpty { go(to: .password) } }
+    func emailNext() { if !emailCode.isEmpty { Task { await confirmEmail() } } }
 
     // Password
     @Published var password: String = ""
@@ -99,12 +102,12 @@ final class SignupFlowViewModel: ObservableObject {
             codeVerified = true
             if userType == .dealer { showDealerField = true } else { go(to: .nickname) }
         } else {
-            phoneError = "인증번호(0000) 또는 휴대폰 번호를 확인하세요."
+            phoneError = "인증번호 또는 휴대폰 번호를 확인하세요."
         }
     }
     func dealerNext() {
         if dealerNumber == "0000" { phoneError = nil; go(to: .nickname) }
-        else { phoneError = "딜러 번호가 올바르지 않습니다. (0000)" }
+        else { phoneError = "딜러 번호가 올바르지 않습니다." }
     }
 
     // Nickname
@@ -113,6 +116,132 @@ final class SignupFlowViewModel: ObservableObject {
     @Published var showCamera = false
     @Published var showGallery = false
     var nicknameValid: Bool { nickname.trimmingCharacters(in: .whitespaces).count >= 2 }
-    func nicknameNext() { if nicknameValid { go(to: .complete) } }
-}
+    @Published var isSubmitting = false
+    @Published var submitError: String? = nil
+    @Published var showServerAlert: Bool = false
 
+    func nicknameNext() {
+        guard nicknameValid else { return }
+        Task { await submitSignup() }
+    }
+
+    private func phoneDashed() -> String {
+        // 간단한 하이픈 포매팅 (자릿수에 따라 3-4-4 또는 3-3-4)
+        let digits = phone.filter { $0.isNumber }
+        if digits.count == 11 {
+            let a = String(digits.prefix(3))
+            let b = String(digits.dropFirst(3).prefix(4))
+            let c = String(digits.suffix(4))
+            return "\(a)-\(b)-\(c)"
+        } else if digits.count == 10 {
+            let a = String(digits.prefix(3))
+            let b = String(digits.dropFirst(3).prefix(3))
+            let c = String(digits.suffix(4))
+            return "\(a)-\(b)-\(c)"
+        }
+        return phone
+    }
+
+    func submitSignup() async {
+        guard let userType else { return }
+        await MainActor.run {
+            isSubmitting = true
+            submitError = nil
+        }
+        do {
+            let roleValue = (userType == .dealer) ? "ROLE_DEALER" : "ROLE_USER"
+            let dealershipName = (userType == .dealer) ? "캠픽딜러" : ""
+            let dealershipRegNo = (userType == .dealer) ? dealerNumber : ""
+            if let res = try await AuthAPI.signupAllowingEmpty(
+                email: email,
+                password: password,
+                checkedPassword: confirm,
+                nickname: nickname,
+                mobileNumber: phoneDashed(),
+                role: roleValue,
+                dealershipName: dealershipName,
+                dealershipRegistrationNumber: dealershipRegNo
+            ) {
+                // 응답 본문이 있으며 디코딩 성공 시 토큰/유저 저장
+                TokenManager.shared.saveAccessToken(res.accessToken)
+                let u = res.user
+                let name = u?.name ?? u?.nickname ?? ""
+                let nick = u?.nickname ?? u?.name ?? ""
+                let phoneValue = u?.mobileNumber ?? phoneDashed()
+                let memberId = u?.memberId ?? u?.id ?? ""
+                let dealerId = u?.dealerId ?? ""
+                let role = u?.role ?? roleValue
+
+                UserState.shared.saveUserData(
+                    name: name,
+                    nickName: nick,
+                    phoneNumber: phoneValue,
+                    memberId: memberId,
+                    dealerId: dealerId,
+                    role: role
+                )
+            }
+            await MainActor.run { go(to: .complete) }
+        } catch {
+            await MainActor.run {
+                if let app = error as? AppError {
+                    submitError = app.message
+                    switch app {
+                    case .cannotConnect, .hostNotFound, .network: showServerAlert = true
+                    default: break
+                    }
+                } else {
+                    submitError = error.localizedDescription
+                }
+            }
+        }
+        await MainActor.run {
+            isSubmitting = false
+        }
+    }
+
+    func sendEmailCode() async {
+        guard !email.isEmpty else { return }
+        await MainActor.run {
+            isEmailSending = true
+            emailError = nil
+        }
+        do {
+            try await AuthAPI.sendEmailCode(email: email)
+            await MainActor.run {
+                self.showEmailCodeField = true
+            }
+        } catch {
+            await MainActor.run {
+                if let app = error as? AppError {
+                    self.emailError = app.message
+                    switch app { case .cannotConnect, .hostNotFound, .network: self.showServerAlert = true; default: break }
+                } else {
+                    self.emailError = error.localizedDescription
+                }
+            }
+        }
+        await MainActor.run {
+            isEmailSending = false
+        }
+    }
+
+    private func confirmEmail() async {
+        guard !emailCode.isEmpty else { return }
+        do {
+            try await AuthAPI.confirmEmailCode(code: emailCode)
+            await MainActor.run {
+                self.go(to: .password)
+            }
+        } catch {
+            await MainActor.run {
+                if let app = error as? AppError {
+                    self.emailError = app.message
+                    switch app { case .cannotConnect, .hostNotFound, .network: self.showServerAlert = true; default: break }
+                } else {
+                    self.emailError = error.localizedDescription
+                }
+            }
+        }
+    }
+}

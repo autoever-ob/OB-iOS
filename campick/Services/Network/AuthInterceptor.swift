@@ -19,8 +19,10 @@ final class AuthInterceptor: RequestInterceptor {
         completion: @escaping (Result<URLRequest, Error>) -> Void
     ) {
         var request = urlRequest
-        // Authorization 헤더에 Access Token 자동 추가
-        request.setValue("Bearer \(TokenManager.shared.accessToken)", forHTTPHeaderField: "Authorization")
+        let token = TokenManager.shared.accessToken
+        if !token.isEmpty {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
         completion(.success(request))
     }
 
@@ -32,20 +34,7 @@ final class AuthInterceptor: RequestInterceptor {
         dueTo error: Error,
         completion: @escaping (RetryResult) -> Void
     ) {
-        if let response = request.task?.response as? HTTPURLResponse, response.statusCode == 401 {
-            // 토큰 만료 → refreshToken 실행 ( 미구현 상태 )
-            TokenManager.shared.refreshToken { success in
-                if success {
-                    // 토큰 갱신 성공 시 → 동일 요청을 다시 시도
-                    completion(.retry)
-                } else {
-                    // 토큰 갱신 실패 시 → 재시도하지 않고 에러 그대로 반환
-                    completion(.doNotRetry)
-                }
-            }
-        } else {
-            // 401 이외의 에러는 그냥 재시도하지 않음
-            completion(.doNotRetry)
-        }
+        // 현재는 액세스 토큰만 사용하므로 재시도 로직은 비활성화
+        completion(.doNotRetry)
     }
 }
