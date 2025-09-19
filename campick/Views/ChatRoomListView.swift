@@ -10,65 +10,67 @@ import SwiftUI
 
 struct ChatRoomListView: View {
     
-    @State private var selectedRoom: ChatRoom?
-    @State private var rooms: [ChatRoom] = [
-        ChatRoom(
-            id: 1,
-            sellerId: "seller1",
-            sellerName: "티파니 갱",
-            sellerAvatar: "tiffany",
-            vehicleId: "1",
-            vehicleTitle: "현대 포레스트 프리미엄",
-            vehicleImage: "testImage1",
-            lastMessage: "Fuck u bitch",
-            lastMessageTime: Date(),
-            unreadCount: 2,
-            isOnline: true
-        ),
-        ChatRoom(
-            id: 2,
-            sellerId: "seller2",
-            sellerName: "느창우",
-            sellerAvatar: "mrchu",
-            vehicleId: "2",
-            vehicleTitle: "기아 봉고 캠퍼",
-            vehicleImage: "testImage2",
-            lastMessage: "야시장에서 뵙겠습니다.",
-            lastMessageTime: Date().addingTimeInterval(-3600),
-            unreadCount: 0,
-            isOnline: false
-        ),
-        ChatRoom(
-            id: 3,
-            sellerId: "seller3",
-            sellerName: "박우진",
-            sellerAvatar: "park",
-            vehicleId: "3",
-            vehicleTitle: "기아 봉고 캠퍼",
-            vehicleImage: "testImage2",
-            lastMessage: "창우 가면 가!",
-            lastMessageTime: Date().addingTimeInterval(-1800),
-            unreadCount: 1,
-            isOnline: true
-        ),
-        ChatRoom(
-            id: 4,
-            sellerId: "seller4",
-            sellerName: "崔东进",
-            sellerAvatar: "choi",
-            vehicleId: "4",
-            vehicleTitle: "현대 포레스트 프리미엄",
-            vehicleImage: "testImage1",
-            lastMessage: "这辆车多少钱",
-            lastMessageTime: Date().addingTimeInterval(-2400),
-            unreadCount: 3,
-            isOnline: false
-        )
+    @State private var selectedRoom: ChatList?
+    @State private var rooms: [ChatList] =
+    [
+//        ChatList(
+//            id: 1,
+//            sellerId: "seller1",
+//            sellerName: "티파니 갱",
+//            sellerAvatar: "tiffany",
+//            vehicleId: "1",
+//            vehicleTitle: "현대 포레스트 프리미엄",
+//            vehicleImage: "testImage1",
+//            lastMessage: "Fuck u bitch",
+//            lastMessageTime: Date(),
+//            unreadCount: 2,
+//            isOnline: true
+//        ),
+//        ChatList(
+//            id: 2,
+//            sellerId: "seller2",
+//            sellerName: "느창우",
+//            sellerAvatar: "mrchu",
+//            vehicleId: "2",
+//            vehicleTitle: "기아 봉고 캠퍼",
+//            vehicleImage: "testImage2",
+//            lastMessage: "야시장에서 뵙겠습니다.",
+//            lastMessageTime: Date().addingTimeInterval(-3600),
+//            unreadCount: 0,
+//            isOnline: false
+//        ),
+//        ChatList(
+//            id: 3,
+//            sellerId: "seller3",
+//            sellerName: "박우진",
+//            sellerAvatar: "park",
+//            vehicleId: "3",
+//            vehicleTitle: "기아 봉고 캠퍼",
+//            vehicleImage: "testImage2",
+//            lastMessage: "창우 가면 가!",
+//            lastMessageTime: Date().addingTimeInterval(-1800),
+//            unreadCount: 1,
+//            isOnline: true
+//        ),
+//        ChatList(
+//            id: 4,
+//            sellerId: "seller4",
+//            sellerName: "崔东进",
+//            sellerAvatar: "choi",
+//            vehicleId: "4",
+//            vehicleTitle: "현대 포레스트 프리미엄",
+//            vehicleImage: "testImage1",
+//            lastMessage: "这辆车多少钱",
+//            lastMessageTime: Date().addingTimeInterval(-2400),
+//            unreadCount: 3,
+//            isOnline: false
+//        )
     ]
     @State private var showFindVehicle = false
+    @StateObject private var viewModel = ChatListViewModel()
     var body: some View {
         VStack(alignment: .center) {
-            if rooms.isEmpty {
+            if viewModel.chats.isEmpty {
                 VStack {
                     Circle()
                         .fill(Color.white.opacity(0.1))
@@ -89,7 +91,6 @@ struct ChatRoomListView: View {
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
                         .padding(.bottom, 16)
-                    
                     Button(action: { showFindVehicle = true }) {
                         Text("매물 찾아보기")
                             .padding()
@@ -105,8 +106,24 @@ struct ChatRoomListView: View {
                     FindVehicleView()
                 }
             } else {
+                //더미
+//                List {
+//                    ForEach(rooms) { room in
+//                        ChatRoomRow(room: room)
+//                            .onTapGesture {
+//                                selectedRoom = room
+//                            }
+//                            .listRowInsets(EdgeInsets())
+//                            .listRowSeparator(.hidden)
+//                            .listRowBackground(Color.clear)
+//                            .padding(.bottom,10)
+//                    }
+//                    .onDelete {indexSet in
+//                        rooms.remove(atOffsets: indexSet)
+//                    }
+//                }
                 List {
-                    ForEach(rooms) { room in
+                    ForEach(viewModel.chats) { room in
                         ChatRoomRow(room: room)
                             .onTapGesture {
                                 selectedRoom = room
@@ -116,64 +133,70 @@ struct ChatRoomListView: View {
                             .listRowBackground(Color.clear)
                             .padding(.bottom,10)
                     }
-                    .onDelete {indexSet in
-                        rooms.remove(atOffsets: indexSet)
+                    .onDelete { indexSet in
+                        viewModel.chats.remove(atOffsets: indexSet)
                     }
                 }
                 .padding()
                 .listStyle(.plain)
-                .navigationDestination(item: $selectedRoom) { room in
-                    ChatRoomView(
-                        seller: ChatSeller(id: "1", name: "박우진", avatar: "tiffany", isOnline: true, lastSeen: Date(),phoneNumber: "010-1234-1234"),
-                        vehicle: ChatVehicle(id: "1", title: "현대 포레스트 프리미엄", price: 8900, status: "판매중", image: "https://picsum.photos/200/120?random=3")
-                    )
-                    .navigationBarHidden(true)   // 네비게이션 바 숨김
-                    .toolbar(.hidden, for: .navigationBar) // iOS 16 이상
-                }
+//                .navigationDestination(item: $selectedRoom) { room in
+//                    ChatRoomView(
+//                        seller: ChatSeller(id: "1", name: "박우진", avatar: "tiffany", isOnline: true, lastSeen: Date(),phoneNumber: "010-1234-1234"),
+//                        vehicle: ChatVehicle(id: "1", title: "현대 포레스트 프리미엄", price: 8900, status: "판매중", image: "https://picsum.photos/200/120?random=3")
+//                    )
+//                    .navigationBarHidden(true)   // 네비게이션 바 숨김
+//                    .toolbar(.hidden, for: .navigationBar) // iOS 16 이상
+//                }
                 
             }
         }
         .background(AppColors.brandBackground)
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear{
+            viewModel.loadChats()
+            rooms = viewModel.chats
+            print(rooms)
+        }
     }
     
 }
 
 
 struct ChatRoomRow: View {
-    let room: ChatRoom
+    let room: ChatList
     
     var body: some View {
         HStack(spacing: 12) {
             ZStack(alignment: .bottomTrailing) {
-                Image(room.sellerAvatar)
+                Image(room.profileImage ?? "testImage1")
                     .resizable()
                     .scaledToFill()
                     .frame(width: 48, height: 48)
                     .clipShape(Circle())
                 
-                if room.isOnline {
-                    Circle()
-                        .fill(Color.green)
-                        .frame(width: 12, height: 12)
-                        .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                        .offset(x: -2, y: 1)
-                }
+//                if room.isOnline {
+//                    Circle()
+//                        .fill(Color.green)
+//                        .frame(width: 12, height: 12)
+//                        .overlay(Circle().stroke(Color.white, lineWidth: 2))
+//                        .offset(x: -2, y: 1)
+//                }
             }
             
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text(room.sellerName)
+                    Text(room.nickname)
                         .foregroundColor(.white)
                         .font(.system(size: 15, weight: .heavy))
                     
                     Spacer()
                     HStack{
-                        Text(formatTime(room.lastMessageTime))
+//                        Text(formatTime(room.lastMessageCreatedAt))
+                        Text(room.lastMessageCreatedAt)
                             .foregroundColor(.white.opacity(0.6))
                             .font(.caption)
-                        if room.unreadCount > 0 {
-                            Text("\(room.unreadCount)")
+                        if room.unreadMessage > 0 {
+                            Text("\(room.unreadMessage)")
                                 .font(.system(size: 10))
                                 .bold()
                                 .padding(.bottom, 3)
@@ -187,11 +210,11 @@ struct ChatRoomRow: View {
                 }
                 
                 HStack {
-                    Image(room.vehicleImage)
+                    Image(room.productThumbnail ?? "testImage1")
                         .resizable()
                         .frame(width: 30, height: 20)
                         .cornerRadius(4)
-                    Text(room.vehicleTitle)
+                    Text(room.productName)
                         .foregroundColor(.white.opacity(0.8))
                         .font(.caption)
                         .lineLimit(1)

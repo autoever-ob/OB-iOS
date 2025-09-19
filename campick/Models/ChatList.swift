@@ -8,30 +8,24 @@
 import Foundation
 
 
-struct ChatRoom: Identifiable,Hashable {
+struct ChatList: Decodable, Identifiable {
     let id: Int
-    let sellerId: String
-    let sellerName: String
-    let sellerAvatar: String
-    let vehicleId: String
-    let vehicleTitle: String
-    let vehicleImage: String
+    let productName: String
+    let productThumbnail: String?
+    let nickname: String
+    let profileImage: String?
     let lastMessage: String
-    let lastMessageTime: Date
-    let unreadCount: Int
-    let isOnline: Bool
-    
+    let lastMessageCreatedAt: String   // 우선 String, 나중에 Date 포맷 맞추기
+    let unreadMessage: Int
+
     enum CodingKeys: String, CodingKey {
-            case chatRoomId = "id"
-            case sellerId
-            case sellerName = "nickname"
-            case sellerAvatar = "profileImage"
-            case vehicleId
-            case vehicleTitle = "productName"
-            case vehicleImage = "productThumbnail"
-            case lastMessage
-            case lastMessageTime = "lastMessageCreatedAt"
-            case unreadCount = "unreadMessage"
-            case isOnline = "isActive"
-        }
+        case id = "chatRoomId"
+        case productName
+        case productThumbnail
+        case nickname
+        case profileImage
+        case lastMessage
+        case lastMessageCreatedAt
+        case unreadMessage
+    }
 }
