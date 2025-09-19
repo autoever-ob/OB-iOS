@@ -57,7 +57,7 @@ struct BottomTabBarView: View {
             if currentSelection == .favorites {
                 TabItems(icon: "heart", label: "찜", active: true)
             } else {
-                NavigationLink(destination: Text("찜리스트")) {
+                NavigationLink(destination: FavoritesView()) {
                     TabItems(icon: "heart", label: "찜", active: false)
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -109,4 +109,3 @@ struct TabItems: View {
         }
     }
 }
-

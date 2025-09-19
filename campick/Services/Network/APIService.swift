@@ -23,6 +23,9 @@ final class APIService {
         
         // 요청 타임아웃 시간 설정 (30초)
         config.timeoutIntervalForRequest = 30
+        // 쿠키 허용(서버가 CSRF/세션 쿠키를 사용하는 경우 대비)
+        config.httpCookieAcceptPolicy = .always
+        config.httpShouldSetCookies = true
         let interceptor = AuthInterceptor()
         let logger = APILogger()
         return Session(configuration: config, interceptor: interceptor, eventMonitors: [logger])
