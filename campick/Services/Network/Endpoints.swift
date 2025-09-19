@@ -25,7 +25,7 @@ enum Endpoint {
         case .signup: return "/api/member/signup"
         case .emailSend: return "/api/member/email/send"
         case .emailVerify: return "/api/member/email/verify"
-        case .carRecommend: return "/product/recommend"
+        case .carRecommend: return "/api/product/recommend"
         case .logout: return "/api/member/logout"
         case .chatList: return "/api/chat/my"
         }

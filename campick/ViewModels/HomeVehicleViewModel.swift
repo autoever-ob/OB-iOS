@@ -9,7 +9,7 @@ import Foundation
 
 
 final class HomeVehicleViewModel: ObservableObject {
-    @Published var vehicles: [Vehicle] = []
+    @Published var vehicles: [RecommendedVehicle] = []
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
 
@@ -28,16 +28,4 @@ final class HomeVehicleViewModel: ObservableObject {
         }
     }
 
-    // 가공된 속성 제공 (ex: UI에서 바로 쓰기 좋게)
-    func yearText(for vehicle: Vehicle) -> String {
-        "\(vehicle.year)년"
-    }
-
-    func mileageText(for vehicle: Vehicle) -> String {
-        "\(vehicle.mileage)km"
-    }
-
-    func priceText(for vehicle: Vehicle) -> String {
-        "\(vehicle.price)원"
-    }
 }
