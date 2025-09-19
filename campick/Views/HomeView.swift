@@ -9,6 +9,8 @@ import SwiftUI
 
 struct HomeView: View {
     @State private var showSlideMenu = false
+    @StateObject private var viewModel = HomeChatViewModel()
+    
     
     var body: some View {
         ZStack {
@@ -39,6 +41,9 @@ struct HomeView: View {
             }
             // 슬라이드 메뉴
             ProfileMenu(showSlideMenu: $showSlideMenu)
+        }
+        .onAppear {
+            viewModel.connectWebSocket(userId: "1")
         }
     }
 }
