@@ -31,10 +31,10 @@ class UserState: ObservableObject {
         dealerId = UserDefaultsManager.getString(forKey: "dealerId") ?? ""
         role = UserDefaultsManager.getString(forKey: "role") ?? ""
 
-        // Check if user has valid token
-        let hasAccessToken = KeychainManager.getToken(forKey: "accessToken") != nil
+        // Keychain에 토큰만 남아 있어도 즉시 로그인 상태를 유지
+        let hasAccessToken = TokenManager.shared.hasValidAccessToken
 
-        isLoggedIn = hasAccessToken && !memberId.isEmpty
+        isLoggedIn = hasAccessToken
     }
 
     func saveUserData(name: String, nickName: String, phoneNumber: String, memberId: String, dealerId: String, role: String) {
@@ -56,7 +56,7 @@ class UserState: ObservableObject {
     }
 
     func saveToken(accessToken: String) {
-        KeychainManager.saveToken(accessToken, forKey: "accessToken")
+        TokenManager.shared.saveAccessToken(accessToken)
 
         if !memberId.isEmpty {
             isLoggedIn = true
@@ -64,8 +64,8 @@ class UserState: ObservableObject {
     }
 
     func logout() {
-        // Clear keychain token
-        KeychainManager.deleteToken(forKey: "accessToken")
+        // Clear keychain token & auto refresh timer
+        TokenManager.shared.clearAll()
 
         // Clear local storage
         UserDefaultsManager.removeValue(forKey: "name")
