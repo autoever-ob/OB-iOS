@@ -13,6 +13,9 @@ struct LoginView: View {
     @State private var keepLoggedIn: Bool = false
     @State private var goHome = false
     @StateObject private var userState = UserState.shared
+    @State private var isLoading = false
+    @State private var errorMessage: String? = nil
+    @State private var showServerAlert: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -20,11 +23,6 @@ struct LoginView: View {
                 AppColors.background
                     .ignoresSafeArea()
                 VStack(spacing: 4) {
-                    TopBarView(title: "로그인") {
-                        // 뒤로가기 액션 정의
-                    }
-                    .padding(.bottom, 98)
-
                     VStack {
                         Text("Campick")
                             .font(.basicFont(size: 40))
@@ -78,9 +76,14 @@ struct LoginView: View {
                             PrimaryActionButton(
                                 title: "로그인",
                                 titleFont: .system(size: 18, weight: .bold),
-                                isDisabled: email.isEmpty || password.isEmpty,
+                                isDisabled: email.isEmpty || password.isEmpty || isLoading,
                             ) {
                                 handleLogin()
+                            }
+                            if let errorMessage {
+                                Text(errorMessage)
+                                    .font(.footnote)
+                                    .foregroundStyle(.red)
                             }
                             
                             // 구분선
@@ -118,25 +121,57 @@ struct LoginView: View {
                             }
                             Spacer()
                         }
-                        .padding(.top, 24)
+                        .padding(.top, 48)
                         .padding(.horizontal, 24)
                     }
+                    .padding(.top, 112)
                 }
+            }
+            .alert("서버 연결이 불안정합니다. 잠시후 다시 시도해 주세요", isPresented: $showServerAlert) {
+                Button("확인", role: .cancel) {}
             }
         }
     }
 
     private func handleLogin() {
-        // Mock login - in real app, this would call API
-        userState.saveToken(accessToken: "mock_access_token")
-        userState.saveUserData(
-            name: "김캠핑",
-            nickName: "캠핑러버",
-            phoneNumber: "010-1234-5678",
-            memberId: "member123",
-            dealerId: "dealer456",
-            role: "USER"
-        )
+        isLoading = true
+        errorMessage = nil
+        Task {
+            do {
+                let res = try await AuthAPI.login(email: email, password: password)
+                TokenManager.shared.saveAccessToken(res.accessToken)
+
+                let u = res.user
+                let name = u?.name ?? u?.nickname ?? ""
+                let nick = u?.nickname ?? u?.name ?? ""
+                let phone = u?.mobileNumber ?? ""
+                let memberId = u?.memberId ?? u?.id ?? ""
+                let dealerId = u?.dealerId ?? ""
+                let role = u?.role ?? ""
+
+                userState.saveUserData(
+                    name: name,
+                    nickName: nick,
+                    phoneNumber: phone,
+                    memberId: memberId,
+                    dealerId: dealerId,
+                    role: role
+                )
+            } catch {
+                if let appError = error as? AppError {
+                    errorMessage = appError.message
+                    switch appError {
+                    case .cannotConnect, .hostNotFound, .network:
+                        showServerAlert = true
+                    default:
+                        break
+                    }
+                } else {
+                    errorMessage = error.localizedDescription
+                }
+            }
+            isLoading = false
+        }
     }
 }
 

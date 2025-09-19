@@ -9,9 +9,11 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var userState = UserState.shared
+    @StateObject private var network = NetworkMonitor.shared
 
     var body: some View {
-        Group {
+        ZStack(alignment: .top) {
+            Group {
             if userState.isLoggedIn {
                 NavigationStack {
                     HomeView()
@@ -23,8 +25,16 @@ struct ContentView: View {
                 }
                 .id("loggedOut")
             }
+            }
+            .id(userState.isLoggedIn)
+
+            if !network.isConnected {
+                ConnectivityBanner()
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .zIndex(1)
+            }
         }
-        .id(userState.isLoggedIn)
+        .animation(.easeInOut(duration: 0.25), value: network.isConnected)
     }
 }
 
