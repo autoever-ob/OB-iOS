@@ -40,7 +40,7 @@ struct BottomBanner: View {
                         .fontWeight(.heavy)
                 }
                 Spacer()
-                Button(action: {}) {
+                NavigationLink(destination: EventDetailView()) {
                     Text("자세히 보기")
                         .bold()
                         .font(.system(size: 11))

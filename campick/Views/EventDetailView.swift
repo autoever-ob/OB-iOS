@@ -1,0 +1,126 @@
+import SwiftUI
+
+struct EventDetailView: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var showConfirmation = false
+    
+    var body: some View {
+        ZStack{
+            AppColors.brandBackground.ignoresSafeArea(.container, edges: .all)
+            VStack {
+                ScrollView {
+                    VStack() {
+                        ZStack {
+                            Image("bottomBannerImage")
+                                .resizable()
+                                .scaledToFill()
+                                .frame(height: 140)
+                                .cornerRadius(16)
+                                .clipped()
+                            
+                            LinearGradient(
+                                gradient: Gradient(colors: [.black.opacity(0.7), .clear]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                            .cornerRadius(16)
+                            
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    HStack {
+                                        Image(systemName: "flame.fill")
+                                            .foregroundColor(AppColors.brandOrange)
+                                        Text("수수료 50% 할인 쿠폰")
+                                            .foregroundColor(.white)
+                                            .font(.caption)
+                                            .fontWeight(.heavy)
+                                    }
+                                    Text("지금 응모하고 혜택 받기")
+                                        .foregroundColor(.white)
+                                        .font(.headline)
+                                        .fontWeight(.heavy)
+                                }
+                                Spacer()
+                            }
+                            .padding()
+                        }
+                        
+                        
+                        VStack(alignment: .leading){
+                            VStack(alignment: .leading){
+                                Text("수수료 50% 할인 쿠폰 응모")
+                                    .font(.title).bold()
+                                    .padding(.top,30)
+                                    .padding(.bottom,1)
+                                Text("응모하고 수수료 50% 할인 쿠폰을 받아보세요")
+                                    .font(.headline)
+                                    .foregroundStyle(.secondary)
+                                    .padding(.bottom,50)
+                                
+                                
+                                Text("혜택")
+                                    .font(.system(size: 22,weight: .bold))
+                                    .padding(.bottom,1)
+                                Text("· 수수료 50% 할인 쿠폰 1매 제공\n· 쿠폰은 지정 카테고리에서 사용 가능")
+                                    .font(.body)
+                                    .padding(.bottom,15)
+                                
+                                
+                                
+                                Text("기간")
+                                    .font(.system(size: 20,weight: .bold))
+                                    .padding(.bottom,1)
+                                Text("응모 기간: 2025.09.01 ~ 2025.10.31")
+                                    .font(.body)
+                                    .padding(.bottom,35)
+                                
+                                
+                                
+                                Text("유의사항")
+                                    .font(.system(size: 19,weight: .bold))
+                                    .padding(.bottom,1)
+                                Text("· 응모는 계정당 1회만 가능합니다.\n· 쿠폰은 발급일로부터 7일 이내 사용해야 합니다.\n· 부정 응모가 확인될 경우 쿠폰이 회수될 수 있습니다.\n· 자세한 내용은 고객센터 공지사항을 확인해 주세요.")
+                                    .font(.body)
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                            }
+                            .padding(.leading, 10)
+                            .foregroundStyle(.white)
+                            
+                            
+                            
+                        }
+                        
+                        
+                    }
+                    .padding(.leading, 10)
+                    
+                }
+                .padding(.horizontal)
+                .padding(.vertical)
+                Button(action: {
+                    showConfirmation = true
+                }) {
+                    Text("쿠폰 응모하기")
+                        .frame(maxWidth: 300)
+                        .padding()
+                        .background(AppColors.brandOrange)
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                .padding(.horizontal)
+                .padding(.bottom)
+            }
+            .alert("응모가 완료되었습니다", isPresented: $showConfirmation) {
+                Button("확인", role: .cancel) { }
+            }
+        }
+    }
+}
+
+#Preview {
+    NavigationStack {
+        EventDetailView()
+            
+    }
+}
