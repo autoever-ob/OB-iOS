@@ -23,10 +23,8 @@ final class APIService {
         
         // 요청 타임아웃 시간 설정 (30초)
         config.timeoutIntervalForRequest = 30
-        
-        // Alamofire의 Session 생성
-        // - configuration: 위에서 설정한 URLSessionConfig 사용
-        // - interceptor: AuthInterceptor 붙여서 모든 요청/응답을 가로채도록 설정
-        return Session(configuration: config, interceptor: AuthInterceptor())
+        let interceptor = AuthInterceptor()
+        let logger = APILogger()
+        return Session(configuration: config, interceptor: interceptor, eventMonitors: [logger])
     }()
 }

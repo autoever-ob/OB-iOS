@@ -6,59 +6,28 @@
 //
 
 import Foundation
+import Alamofire
 
 class AuthService: ObservableObject {
     static let shared = AuthService()
 
     private init() {}
 
-    // 로그아웃 API 호출
+    // 로그아웃 API 호출 (Alamofire 사용)
     func logout() async throws {
-        guard let url = URL(string: "http://localhost:8080/api/member/logout") else {
-            throw URLError(.badURL)
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        // URLSession 구성 (쿠키 포함)
-        let config = URLSessionConfiguration.default
-        config.httpCookieAcceptPolicy = .always
-        config.httpShouldSetCookies = true
-        let session = URLSession(configuration: config)
-
-        let (_, response) = try await session.data(for: request)
-
-        if let httpResponse = response as? HTTPURLResponse {
-            guard httpResponse.statusCode == 200 else {
-                throw URLError(.badServerResponse)
-            }
-        }
+        let url = "http://localhost:8080/api/member/logout"
+        let request = APIService.shared
+            .request(url, method: .post)
+            .validate()
+        _ = try await request.serializingData().value
     }
 
-    // 회원탈퇴 API 호출
+    // 회원탈퇴 API 호출 (Alamofire 사용)
     func withdrawal() async throws {
-        guard let url = URL(string: "http://localhost:8080/api/member/signout") else {
-            throw URLError(.badURL)
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "DELETE"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        // URLSession 구성 (쿠키 포함)
-        let config = URLSessionConfiguration.default
-        config.httpCookieAcceptPolicy = .always
-        config.httpShouldSetCookies = true
-        let session = URLSession(configuration: config)
-
-        let (_, response) = try await session.data(for: request)
-
-        if let httpResponse = response as? HTTPURLResponse {
-            guard httpResponse.statusCode == 200 else {
-                throw URLError(.badServerResponse)
-            }
-        }
+        let url = "http://localhost:8080/api/member/signout"
+        let request = APIService.shared
+            .request(url, method: .delete)
+            .validate()
+        _ = try await request.serializingData().value
     }
 }
