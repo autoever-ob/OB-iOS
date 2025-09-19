@@ -173,7 +173,14 @@ class ProfileViewViewModel: ObservableObject {
     }
 
     func logout() {
-        UserState.shared.logout()
+        Task {
+            do {
+                try await AuthAPI.logout()
+            } catch {
+                // 서버 실패 시에도 로컬 세션은 종료
+            }
+            await MainActor.run { UserState.shared.logout() }
+        }
     }
 
     func deleteAccount() {
@@ -181,6 +188,7 @@ class ProfileViewViewModel: ObservableObject {
     }
 
     func confirmDeleteAccount() {
+        // 회원탈퇴 API 미구현: 로컬 세션만 종료
         UserState.shared.logout()
     }
 }

@@ -43,7 +43,11 @@ struct PhoneStepView: View {
             }
             if showCodeField {
                 Text("인증번호").foregroundStyle(.white.opacity(0.9)).bold()
-                OutlinedInputField(text: $code, placeholder: "인증번호", systemImage: "number", isSecure: false, keyboardType: .default)
+                OutlinedInputField(text: $code, placeholder: "인증번호", systemImage: "number", isSecure: false, keyboardType: .numberPad)
+                    .onChange(of: code) { _, v in
+                        let digits = v.filter { $0.isNumber }
+                        if v != digits { code = digits }
+                    }
                 HStack {
                     Spacer()
                     Image(systemName: "timer")

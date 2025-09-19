@@ -10,7 +10,7 @@ import SwiftUI
 struct SignupFlowView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var vm = SignupFlowViewModel()
-    @State private var goHome: Bool = false
+    // 회원가입 완료 후 자동 로그인으로 홈 전환은 UserState에 의해 처리됩니다.
 
     
 
@@ -50,7 +50,7 @@ struct SignupFlowView: View {
                             submitError: $vm.submitError
                         ) { vm.nicknameNext() }
                     case .complete:
-                        CompleteStepView(onAutoForward: { goHome = true })
+                        CompleteStepView(onAutoForward: { Task { await vm.autoLoginAfterSignup() } })
                     }
                 }
                 .padding(.horizontal, 14)
@@ -60,7 +60,6 @@ struct SignupFlowView: View {
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
-        .navigationDestination(isPresented: $goHome) { HomeView() }
         .alert("서버 연결이 불안정합니다. 잠시후 다시 시도해 주세요", isPresented: $vm.showServerAlert) {
             Button("확인", role: .cancel) {}
         }

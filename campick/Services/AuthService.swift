@@ -22,12 +22,5 @@ class AuthService: ObservableObject {
         _ = try await request.serializingData().value
     }
 
-    // 회원탈퇴 API 호출 (Alamofire 사용)
-    func withdrawal() async throws {
-        let url = "http://localhost:8080/api/member/signout"
-        let request = APIService.shared
-            .request(url, method: .delete)
-            .validate()
-        _ = try await request.serializingData().value
-    }
+    // 회원탈퇴 API 미구현: 현재는 사용하지 않음
 }

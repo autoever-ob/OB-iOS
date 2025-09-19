@@ -14,6 +14,8 @@ enum Endpoint {
     case emailSend
     case emailVerify
     case carRecommend
+    case logout
+    case chatList
 
     static let baseURL = "https://campick.shop"
 
@@ -24,6 +26,8 @@ enum Endpoint {
         case .emailSend: return "/api/member/email/send"
         case .emailVerify: return "/api/member/email/verify"
         case .carRecommend: return "/product/recommend"
+        case .logout: return "/api/member/logout"
+        case .chatList: return "/api/chat/my"
         }
     }
 

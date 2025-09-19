@@ -19,9 +19,22 @@ final class AuthInterceptor: RequestInterceptor {
         completion: @escaping (Result<URLRequest, Error>) -> Void
     ) {
         var request = urlRequest
-        let token = TokenManager.shared.accessToken
-        if !token.isEmpty {
-            request.setValue("Bearer eyJhbGciOiJIUzI1NiJ9.eyJjYXRlZ29yeSI6ImFjY2VzcyIsImlkIjoxMiwicm9sZSI6IlJPTEVfVVNFUiIsImlhdCI6MTc1ODI1MTIyNSwiZXhwIjoxNzU4MjUzMDI1fQ.ZleO4qro17rHY4K_mE408OwJRpVTLyuKIR9sBfYw2JQ", forHTTPHeaderField: "Authorization")
+        
+        // 기본 Accept 헤더 지정 (일부 서버가 명시 요구)
+        if request.value(forHTTPHeaderField: "Accept") == nil {
+            request.setValue("application/json", forHTTPHeaderField: "Accept")
+        }
+        // 인증 관련 엔드포인트에는 Authorization 헤더를 붙이지 않습니다.
+        if let url = request.url?.absoluteString {
+            let isAuthEndpoint = url.contains("/api/member/login") ||
+                                url.contains("/api/member/signup") ||
+                                url.contains("/api/member/email/")
+            if !isAuthEndpoint {
+                let token = TokenManager.shared.accessToken
+                if !token.isEmpty {
+                    request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                }
+            }
         }
         completion(.success(request))
     }
