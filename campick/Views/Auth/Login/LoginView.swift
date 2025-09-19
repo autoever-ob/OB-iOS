@@ -159,7 +159,7 @@ struct LoginView: View {
                 )
             } catch {
                 if let appError = error as? AppError {
-                    errorMessage = appError.message
+                    
                     switch appError {
                     case .cannotConnect, .hostNotFound, .network:
                         showServerAlert = true
