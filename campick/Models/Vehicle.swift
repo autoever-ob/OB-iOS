@@ -47,5 +47,5 @@ struct Vehicle: Identifiable,Decodable {
     // Flags
     let isOnSale: Bool
     let isFavorite: Bool
-    let likeCount: Int? = nil
+    var likeCount: Int? = nil
 }

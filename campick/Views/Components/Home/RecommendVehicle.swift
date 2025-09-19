@@ -41,23 +41,30 @@ struct RecommendVehicle: View {
             }
             
             VStack(spacing: 16) {
-                ForEach(Array(viewModel.vehicles.enumerated()), id: \.element.id) { index, vehicle in
-                    VehicleCard(
-                        image: vehicle.thumbnailURL?.absoluteString ?? "testImage1",
-                        title: vehicle.title,
-                        year: viewModel.yearText(for: vehicle),
-                        milage: viewModel.mileageText(for: vehicle),
-                        price: viewModel.priceText(for: vehicle),
-                        likeCount: vehicle.likeCount ?? 0,
-                        badge: index == 0 ? "NEW" : (index == 1 ? "HOT" : nil),
-                        badgeColor: index == 0 ? AppColors.brandLightGreen : (index == 1 ? AppColors.brandOrange : .clear)
-                    )
+                if viewModel.vehicles.isEmpty {
+                    
+                    Text("추천 매물이 존재하지 않습니다")
+                        .foregroundColor(.white.opacity(0.7))
+                        .font(.subheadline)
+                        .padding()
+                } else {
+                    ForEach(Array(viewModel.vehicles.enumerated()), id: \.element.id) { index, vehicle in
+                        VehicleCard(
+                            image: vehicle.thumbnailURL?.absoluteString ?? "testImage1",
+                            title: vehicle.title,
+                            year: viewModel.yearText(for: vehicle),
+                            milage: viewModel.mileageText(for: vehicle),
+                            price: viewModel.priceText(for: vehicle),
+                            likeCount: vehicle.likeCount ?? 0,
+                            badge: index == 0 ? "NEW" : (index == 1 ? "HOT" : nil),
+                            badgeColor: index == 0 ? AppColors.brandLightGreen : (index == 1 ? AppColors.brandOrange : .clear)
+                        )
+                    }
                 }
             }
             
         }
         .onAppear{
-            print("⭐️ RecommendVehicle onAppear 실행됨")
             viewModel.loadRecommendVehicles()
         }
     }

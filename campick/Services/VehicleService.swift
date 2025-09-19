@@ -26,10 +26,10 @@ class VehicleService: ObservableObject {
                 .responseDecodable(of: [Vehicle].self, decoder: decoder) { response in
                     switch response.result {
                     case .success(let vehicles):
-                        print("✅ 차량 목록 로드 성공")
+                        print("차량 목록 로드 성공")
                         completion(.success(vehicles))
                     case .failure(let error):
-                        print("❌ 차량 목록 로드 실패: \(error.localizedDescription)")
+                        print("차량 목록 로드 실패: \(error.localizedDescription)")
                         completion(.failure(error))
                     }
                 }

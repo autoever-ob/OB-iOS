@@ -21,7 +21,7 @@ final class AuthInterceptor: RequestInterceptor {
         var request = urlRequest
         let token = TokenManager.shared.accessToken
         if !token.isEmpty {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            request.setValue("Bearer eyJhbGciOiJIUzI1NiJ9.eyJjYXRlZ29yeSI6ImFjY2VzcyIsImlkIjoxMiwicm9sZSI6IlJPTEVfVVNFUiIsImlhdCI6MTc1ODI1MTIyNSwiZXhwIjoxNzU4MjUzMDI1fQ.ZleO4qro17rHY4K_mE408OwJRpVTLyuKIR9sBfYw2JQ", forHTTPHeaderField: "Authorization")
         }
         completion(.success(request))
     }
