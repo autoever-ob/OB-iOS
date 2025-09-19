@@ -8,18 +8,8 @@
 import SwiftUI
 
 struct VehicleCardView: View {
-    // MARK: - 렌더링에 사용되는 저장 프로퍼티
-    private let imageName: String?
-    private let thumbnailURL: URL?
-    private let title: String
-    private let price: String
-    private let year: String
-    private let mileage: String
-    private let fuelType: String
-    private let transmission: String
-    private let location: String
-    private let isOnSale: Bool
-    @State private var isFavorite: Bool
+    // MARK: - ViewModel
+    @StateObject private var vm: VehicleCardViewModel
 
     // MARK: - 디자인 상수
     private let cornerRadius: CGFloat = 12
@@ -28,17 +18,7 @@ struct VehicleCardView: View {
     // MARK: - 이니셜라이저
     // 1) 모델 기반 이니셜라이저(하위 호환)
     init(vehicle: Vehicle) {
-        self.imageName = vehicle.imageName
-        self.thumbnailURL = vehicle.thumbnailURL
-        self.title = vehicle.title
-        self.price = vehicle.price
-        self.year = vehicle.year
-        self.mileage = vehicle.mileage
-        self.fuelType = vehicle.fuelType
-        self.transmission = vehicle.transmission
-        self.location = vehicle.location
-        self.isOnSale = vehicle.isOnSale
-        self._isFavorite = State(initialValue: vehicle.isFavorite)
+        _vm = StateObject(wrappedValue: VehicleCardViewModel(vehicle: vehicle))
     }
 
     // 2) 목업 데이터용 이니셜라이저
@@ -55,17 +35,19 @@ struct VehicleCardView: View {
         isOnSale: Bool = true,
         isFavorite: Bool = false
     ) {
-        self.imageName = imageName
-        self.thumbnailURL = thumbnailURL
-        self.title = title
-        self.price = price
-        self.year = year
-        self.mileage = mileage
-        self.fuelType = fuelType
-        self.transmission = transmission
-        self.location = location
-        self.isOnSale = isOnSale
-        self._isFavorite = State(initialValue: isFavorite)
+        _vm = StateObject(wrappedValue: VehicleCardViewModel(
+            title: title,
+            price: price,
+            year: year,
+            mileage: mileage,
+            fuelType: fuelType,
+            transmission: transmission,
+            location: location,
+            imageName: imageName,
+            thumbnailURL: thumbnailURL,
+            isOnSale: isOnSale,
+            isFavorite: isFavorite
+        ))
     }
 
     var body: some View {
@@ -87,16 +69,13 @@ struct VehicleCardView: View {
                         style: .continuous
                     ))
                     .overlay(alignment: .topLeading) {
-                        HStack {
-                            SalesStatusChip(isOnSale: isOnSale)
-                                .padding(8)
+                        HStack(spacing: 8) {
+                            SalesStatusChip(isOnSale: vm.isOnSale)
+                            Chip(text: vm.location)
                             Spacer()
-                            Image(systemName: isFavorite ? "heart.fill" : "heart")
-                                .foregroundColor(isFavorite ? .red : .gray)
-                                .padding(.trailing, 6)
-                                .onTapGesture { isFavorite.toggle() }
                         }
                         .padding(.horizontal, 4)
+                        .padding(.top, 4)
                     }
 
                 // 정보 섹션
@@ -113,11 +92,12 @@ struct VehicleCardView: View {
     // MARK: - 이미지 빌더
     @ViewBuilder
     private var vehicleImage: some View {
-        if let imageName {
+        if let imageName = vm.imageName {
             Image(imageName)
                 .resizable()
                 .scaledToFill()
         } else {
+            // 이미지가 없을 경우, 기본 차량 이미지가 나온다.
             Image("testImage3")
                 .resizable()
                 .scaledToFill()
@@ -126,53 +106,92 @@ struct VehicleCardView: View {
     
     // MARK: - 정보 섹션
     private var infoSection: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading) {
+            
             // 제목
             HStack {
-                Text(title)
-                    .font(.headline)
-                    .bold()
-                    .foregroundColor(.white)
+                VStack(alignment: .leading) {
+                    Text(vm.title)
+                        .font(.headline)
+                        .bold()
+                        .foregroundColor(.white)
+                
+                    // 가격
+                    Text(vm.price)
+                        .font(.title2)
+                        .bold()
+                        .foregroundColor(AppColors.brandOrange)
+                        .padding(.bottom, 2)
+                }
                 Spacer()
+                Button(action: { vm.toggleFavorite() }) {
+                    Image(systemName: vm.isFavorite ? "heart.fill" : "heart")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(vm.isFavorite ? .red : .white)
+                        .frame(width: 32, height: 32)
+                        .background(
+                            Circle()
+                                .fill(.ultraThinMaterial)
+                                .opacity(vm.isFavorite ? 0.6 : 0.2)
+                        )
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
+                .padding(.trailing, 3)
+                
             }
-            .padding(.top, 10)
-
-            // 가격
-            Text(price)
-                .font(.title3.bold())
-                .foregroundColor(AppColors.brandOrange)
-
-            HStack(spacing: 10) {
-                Label(location, systemImage: "map")
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Label(year, systemImage: "calendar")
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Label(mileage, systemImage: "speedometer")
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Label(fuelType, systemImage: "fuelpump")
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Label(transmission, systemImage: "gearshape")
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+            
+            VStack(alignment: .center) {
+                HStack(spacing: 28) {
+                    // 반복되는 항목을 데이터로 구성하여 ForEach로 렌더링
+                    let specs: [(label: String, value: String)] = [
+                        ("연식", vm.year),
+                        ("주행거리", vm.mileage),
+                        ("연료", vm.fuelType),
+                        ("변속기", vm.transmission)
+                    ]
+                    ForEach(Array(specs.enumerated()), id: \.offset) { idx, spec in
+                        VStack {
+                            Text(spec.label)
+                                .foregroundColor(AppColors.brandWhite70)
+                                .font(.system(size: 12, weight: .semibold))
+                            Text(spec.value)
+                                .foregroundColor(.white)
+                                .font(.system(size: 16))
+                                .bold()
+                        }
+                        .padding(.vertical, idx == 0 ? 7 : 0)
+                    }
+                }
+                .padding(.horizontal, 30)
+                .padding(.vertical, 2)
+                .background {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .opacity(0.3)
+                }
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(Color.white.opacity(0.18), lineWidth: 1)
+                )
             }
-            .labelStyle(CustomLabelStyle(spacing: 4))
-            .font(.system(size: 10))
-            .foregroundColor(.white.opacity(0.7))
-            .padding(.bottom, 4)
+            .frame(maxWidth: .infinity, alignment: .center)
+
         }
+        .padding(.top, 10)
+        .padding(.bottom, 10)
     }
 
-    // MARK: - 헤더 섹션
+    // MARK: - 헤더 섹션, 이미지가 들어가는 부분 clear를 사용하여 스켈레톤까지 대비 가능
     private var headerSection: some View {
         ZStack {
             Color.clear
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            if imageName != nil || thumbnailURL != nil {
+            if vm.imageName != nil || vm.thumbnailURL != nil {
                 vehicleImage
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .clipped()
