@@ -17,4 +17,7 @@ enum AppColors {
     static let brandLightOrange = Color(hex:"FB923C")
     static let brandLightGreen = Color(hex: "22C55E")
     static let brandBackground = Color(hex: "#0B211A")
+    
+    // 색상과 숫자가 같이 있는 경우는 해당 색상에 투명도(n)이 적용된 것임
+    static let brandWhite70 = Color.white.opacity(0.7)
 }
