@@ -15,7 +15,7 @@ struct OutlinedInputField: View {
     var isSecure: Bool = false
     @State private var isRevealed: Bool = false
     var keyboardType: UIKeyboardType? = nil
-    // Optional focus binding to allow parent to programmatically focus this field
+    // 부모가 이 필드를 프로그래밍적으로 포커스할 수 있도록 하는 선택적 포커스 바인딩임
     var focus: FocusState<Bool>.Binding?
     
     init(text: Binding<String>,
@@ -43,39 +43,66 @@ struct OutlinedInputField: View {
                 }
                 
                 if isSecure {
-                    // Plain TextField used for revealed state
-                    let plain = TextField("", text: $text)
-                        .textContentType(.password)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled(true)
-                        .foregroundStyle(.white)
-                        .tint(AppColors.brandOrange)
-                        .font(.body)
-                        .frame(height: 22)
-                        .opacity(isRevealed ? 1 : 0)
-                        .allowsHitTesting(isRevealed)
-                    let secured = SecureField("", text: $text)
-                        .textContentType(.password)
-                        .foregroundStyle(.white)
-                        .tint(AppColors.brandOrange)
-                        .font(.body)
-                        .frame(height: 22)
-                        .opacity(isRevealed ? 0 : 1)
-                        .allowsHitTesting(!isRevealed)
-                    if let focus {
-                        plain.focused(focus)
-                    } else { _ = plain }
-                    if let focus {
-                        secured.focused(focus)
-                    } else { _ = secured }
+                    Group {
+                        if let focus {
+                            TextField("", text: $text)
+                                .textContentType(.password)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled(true)
+                                .foregroundStyle(.white)
+                                .tint(AppColors.brandOrange)
+                                .font(.body)
+                                .frame(height: 22)
+                                .opacity(isRevealed ? 1 : 0)
+                                .allowsHitTesting(isRevealed)
+                                .focused(focus)
+                            SecureField("", text: $text)
+                                .textContentType(.password)
+                                .foregroundStyle(.white)
+                                .tint(AppColors.brandOrange)
+                                .font(.body)
+                                .frame(height: 22)
+                                .opacity(isRevealed ? 0 : 1)
+                                .allowsHitTesting(!isRevealed)
+                                .focused(focus)
+                        } else {
+                            TextField("", text: $text)
+                                .textContentType(.password)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled(true)
+                                .foregroundStyle(.white)
+                                .tint(AppColors.brandOrange)
+                                .font(.body)
+                                .frame(height: 22)
+                                .opacity(isRevealed ? 1 : 0)
+                                .allowsHitTesting(isRevealed)
+                            SecureField("", text: $text)
+                                .textContentType(.password)
+                                .foregroundStyle(.white)
+                                .tint(AppColors.brandOrange)
+                                .font(.body)
+                                .frame(height: 22)
+                                .opacity(isRevealed ? 0 : 1)
+                                .allowsHitTesting(!isRevealed)
+                        }
+                    }
                 } else {
-                    let field = TextField("", text: $text)
-                        .keyboardType(keyboardType ?? .emailAddress)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled(true)
-                        .foregroundStyle(.white)
-                        .tint(AppColors.brandOrange)
-                    if let focus { field.focused(focus) } else { _ = field }
+                    if let focus {
+                        TextField("", text: $text)
+                            .keyboardType(keyboardType ?? .emailAddress)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled(true)
+                            .foregroundStyle(.white)
+                            .tint(AppColors.brandOrange)
+                            .focused(focus)
+                    } else {
+                        TextField("", text: $text)
+                            .keyboardType(keyboardType ?? .emailAddress)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled(true)
+                            .foregroundStyle(.white)
+                            .tint(AppColors.brandOrange)
+                    }
                 }
             }
             
