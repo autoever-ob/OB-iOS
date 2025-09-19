@@ -15,7 +15,13 @@ enum AuthAPI {
             let request = APIService.shared
                 .request(Endpoint.login.url, method: .post, parameters: req, encoder: JSONParameterEncoder.default)
                 .validate()
-            return try await request.serializingDecodable(AuthResponse.self).value
+            // 서버가 envelope { status, success, message, data: { accessToken, ... } } 형태를 반환함
+            let wrapped = try await request.serializingDecodable(ApiResponse<LoginDataDTO>.self).value
+            guard let token = wrapped.data?.accessToken else {
+                throw AppError.decoding
+            }
+            // 기존 AuthResponse 형태로 맞춰서 반환 (user는 서버 응답에 없으므로 nil)
+            return AuthResponse(accessToken: token, user: nil)
         } catch {
             throw ErrorMapper.map(error)
         }
@@ -113,4 +119,17 @@ enum AuthAPI {
             throw ErrorMapper.map(error)
         }
     }
+
+    static func logout() async throws {
+        do {
+            let request = APIService.shared
+                .request(Endpoint.logout.url, method: .post)
+                .validate()
+            _ = try await request.serializingData().value
+        } catch {
+            throw ErrorMapper.map(error)
+        }
+    }
+
+    // 회원탈퇴 API는 아직 미구현이므로 연동 제거
 }
