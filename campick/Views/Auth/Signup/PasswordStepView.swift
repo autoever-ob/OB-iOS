@@ -16,10 +16,10 @@ struct PasswordStepView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("비밀번호").foregroundStyle(.white.opacity(0.9)).bold()
-            OutlinedInputField(text: $password, placeholder: "비밀번호 (8자 이상)",  isSecure: true)
+            NoPasteSecureField(text: $password, placeholder: "비밀번호 (8자 이상)")
             if !password.isEmpty {
                 Text("비밀번호 확인").foregroundStyle(.white.opacity(0.9)).bold()
-                OutlinedInputField(text: $confirm, placeholder: "비밀번호 확인", isSecure: true)
+                NoPasteSecureField(text: $confirm, placeholder: "비밀번호 확인")
             }
             if let errorMessage {
                 Text(errorMessage).foregroundStyle(.red).font(.caption)
@@ -37,4 +37,3 @@ struct PasswordStepView: View {
         }
     }
 }
-

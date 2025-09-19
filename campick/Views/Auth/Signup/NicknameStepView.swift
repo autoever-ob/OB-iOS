@@ -12,11 +12,14 @@ struct NicknameStepView: View {
     @Binding var selectedImage: UIImage?
     @Binding var showCamera: Bool
     @Binding var showGallery: Bool
+    @Binding var isSubmitting: Bool
+    @Binding var submitError: String?
     var onNext: () -> Void
 
     var body: some View {
         VStack(spacing: 16) {
             ZstackAvatar
+                .padding(.vertical, 40)
 
             HStack(spacing: 10) {
                 PrimaryActionButton(title: "사진 찍기", titleFont: .system(size: 14, weight: .semibold), systemImage: "camera", width: 120, height: 28) {
@@ -33,7 +36,17 @@ struct NicknameStepView: View {
             }
 
             if nickname.trimmingCharacters(in: .whitespaces).count >= 2 {
-                PrimaryActionButton(title: "가입 완료", titleFont: .system(size: 18, weight: .semibold), height: 28) { onNext() }
+                PrimaryActionButton(
+                    title: isSubmitting ? "처리 중..." : "가입 완료",
+                    titleFont: .system(size: 18, weight: .semibold),
+                    height: 28,
+                    isDisabled: isSubmitting
+                ) { onNext() }
+            }
+            if let submitError {
+                Text(submitError)
+                    .font(.footnote)
+                    .foregroundStyle(.red)
             }
         }
         .sheet(isPresented: $showCamera) { MediaPickerSheet(source: .camera, selectedImage: $selectedImage) }
@@ -54,4 +67,3 @@ struct NicknameStepView: View {
         .overlay(Circle().stroke(Color.white.opacity(0.2), lineWidth: 1))
     }
 }
-
