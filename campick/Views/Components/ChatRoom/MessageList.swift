@@ -90,10 +90,8 @@ struct MessageList: View {
                 scrollToBottom(proxy: proxy, animated: false)
             }
             .onChange(of: messages.count) { _, _ in
-                // 새로운 메시지가 추가되고 사용자가 바닥에 있을 때만 따라 내려가기
-                if isAtBottom {
-                    scrollToBottom(proxy: proxy, animated: true)
-                }
+                // 새로운 메시지가 추가되면 항상 바닥으로 이동
+                scrollToBottom(proxy: proxy, animated: true)
             }
             .onChange(of: isTyping) { _, _ in
                 // 타이핑 인디케이터가 나타날 때 바닥에 있으면 유지
@@ -103,6 +101,19 @@ struct MessageList: View {
                     }
                 }
             }
+            .onChange(of: messages) { _, newMessages in
+                guard let last = newMessages.last else { return }
+                // 내가 보낸 메시지면 무조건 바닥으로
+                if last.isMyMessage {
+                    scrollToBottom(proxy: proxy, animated: true)
+                } else {
+                    // 상대 메시지면, 사용자가 바닥에 있을 때만 따라가기(현행 유지)
+                    if isAtBottom {
+                        scrollToBottom(proxy: proxy, animated: true)
+                    }
+                }
+            }
+
             .onPreferenceChange(ContainerBottomPreferenceKey.self) { value in
                 containerMaxY = value
             }
