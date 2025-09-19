@@ -37,39 +37,85 @@ final class FindVehicleViewModel: ObservableObject {
     }
 
     func fetchVehicles() {
-        // TODO: Replace with API integration
-        // Temporary mock data to keep UI functional
-        let mock: [Vehicle] = [
-            Vehicle(id: "1", imageName: "testImage3", thumbnailURL: nil, title: "모터홈 A", price: "2,900만원", year: "2021년", mileage: "8,000km", fuelType: "가솔린", transmission: "자동", location: "서울", status: .active, postedDate: "1일 전", isOnSale: true, isFavorite: false),
-            Vehicle(id: "2", imageName: "testImage3", thumbnailURL: nil, title: "트레일러 B", price: "3,850만원", year: "2022년", mileage: "12,000km", fuelType: "디젤", transmission: "수동", location: "부산", status: .active, postedDate: "2일 전", isOnSale: true, isFavorite: false),
-            Vehicle(id: "3", imageName: "testImage3", thumbnailURL: nil, title: "픽업캠퍼 C", price: "4,500만원", year: "2023년", mileage: "25,000km", fuelType: "하이브리드", transmission: "자동", location: "인천", status: .active, postedDate: "3일 전", isOnSale: true, isFavorite: false),
-            Vehicle(id: "4", imageName: "testImage3", thumbnailURL: nil, title: "캠핑밴 D", price: "5,200만원", year: "2024년", mileage: "40,000km", fuelType: "전기", transmission: "수동", location: "대구", status: .active, postedDate: "4일 전", isOnSale: true, isFavorite: false)
-        ]
+        Task {
+            do {
+                let items = try await ProductAPI.fetchProducts(page: 0, size: 30)
+                var mapped = items.map(mapToVehicle)
 
-        // Simple client-side filtering by query (title/location)
-        let q = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        var filtered = mock
-        if !q.isEmpty {
-            filtered = filtered.filter { v in
-                v.title.lowercased().contains(q) || v.location.lowercased().contains(q)
+                // 클라이언트 단 검색 필터
+                let q = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                if !q.isEmpty {
+                    mapped = mapped.filter { v in
+                        v.title.lowercased().contains(q) || v.location.lowercased().contains(q)
+                    }
+                }
+
+                // 필터 옵션 적용 (가격/주행거리/연식)
+                mapped = mapped.filter { v in
+                    let p = priceValue(v.price)
+                    let m = mileageValue(v.mileage)
+                    let y = yearValue(v.year)
+                    let priceOK = Int(filterOptions.priceRange.lowerBound) <= p && p <= Int(filterOptions.priceRange.upperBound)
+                    let mileageOK = Int(filterOptions.mileageRange.lowerBound) <= m && m <= Int(filterOptions.mileageRange.upperBound)
+                    let yearOK = Int(filterOptions.yearRange.lowerBound) <= y && y <= Int(filterOptions.yearRange.upperBound)
+                    return priceOK && mileageOK && yearOK
+                }
+
+                // 정렬 적용
+                switch selectedSort {
+                case .recentlyAdded:
+                    vehicles = mapped // API가 최신순이라 가정
+                case .lowPrice:
+                    vehicles = mapped.sorted { priceValue($0.price) < priceValue($1.price) }
+                case .highPrice:
+                    vehicles = mapped.sorted { priceValue($0.price) > priceValue($1.price) }
+                case .lowMileage:
+                    vehicles = mapped.sorted { mileageValue($0.mileage) < mileageValue($1.mileage) }
+                case .newestYear:
+                    vehicles = mapped.sorted { yearValue($0.year) > yearValue($1.year) }
+                }
+            } catch {
+                // 네트워크 실패 시 현재 리스트 유지 또는 비우기 선택
+                vehicles = []
             }
         }
+    }
 
-        // TODO: apply filterOptions
-
-        // Simple sort examples
-        switch selectedSort {
-        case .recentlyAdded:
-            vehicles = filtered // mock already recent
-        case .lowPrice:
-            vehicles = filtered.sorted { priceValue($0.price) < priceValue($1.price) }
-        case .highPrice:
-            vehicles = filtered.sorted { priceValue($0.price) > priceValue($1.price) }
-        case .lowMileage:
-            vehicles = filtered.sorted { mileageValue($0.mileage) < mileageValue($1.mileage) }
-        case .newestYear:
-            vehicles = filtered.sorted { yearValue($0.year) > yearValue($1.year) }
+    // MARK: - DTO -> View Model mapping
+    private func mapToVehicle(_ dto: ProductItemDTO) -> Vehicle {
+        let id = String(dto.productId)
+        let thumb = URL(string: dto.thumbNail)
+        let status: VehicleStatus
+        switch dto.status.uppercased() {
+        case "AVAILABLE": status = .active
+        case "RESERVED": status = .reserved
+        case "SOLD": status = .sold
+        default: status = .active
         }
+        // 제목에서 연식을 간단 추출(없으면 "-")
+        let extractedYear: String = {
+            let pattern = "(20[0-4][0-9]|19[0-9]{2})"
+            if let range = dto.title.range(of: pattern, options: .regularExpression) {
+                return String(dto.title[range]) + "년"
+            }
+            return "-"
+        }()
+        return Vehicle(
+            id: id,
+            imageName: nil,
+            thumbnailURL: thumb,
+            title: dto.title,
+            price: dto.price,
+            year: extractedYear,
+            mileage: dto.mileage,
+            fuelType: "-",
+            transmission: "-",
+            location: dto.location,
+            status: status,
+            postedDate: dto.createdAt,
+            isOnSale: status == .active,
+            isFavorite: dto.isLiked
+        )
     }
 
     // MARK: - Parsing helpers
