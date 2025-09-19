@@ -7,26 +7,13 @@
 
 import SwiftUI
 
-struct ChatRoom: Identifiable,Hashable {
-    let id: String
-    let sellerId: String
-    let sellerName: String
-    let sellerAvatar: String
-    let vehicleId: String
-    let vehicleTitle: String
-    let vehicleImage: String
-    let lastMessage: String
-    let lastMessageTime: Date
-    let unreadCount: Int
-    let isOnline: Bool
-}
 
 struct ChatRoomListView: View {
     
     @State private var selectedRoom: ChatRoom?
     @State private var rooms: [ChatRoom] = [
         ChatRoom(
-            id: "1",
+            id: 1,
             sellerId: "seller1",
             sellerName: "티파니 갱",
             sellerAvatar: "tiffany",
@@ -39,7 +26,7 @@ struct ChatRoomListView: View {
             isOnline: true
         ),
         ChatRoom(
-            id: "2",
+            id: 2,
             sellerId: "seller2",
             sellerName: "느창우",
             sellerAvatar: "mrchu",
@@ -52,7 +39,7 @@ struct ChatRoomListView: View {
             isOnline: false
         ),
         ChatRoom(
-            id: "3",
+            id: 3,
             sellerId: "seller3",
             sellerName: "박우진",
             sellerAvatar: "park",
@@ -65,7 +52,7 @@ struct ChatRoomListView: View {
             isOnline: true
         ),
         ChatRoom(
-            id: "4",
+            id: 4,
             sellerId: "seller4",
             sellerName: "崔东进",
             sellerAvatar: "choi",
