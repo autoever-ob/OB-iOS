@@ -21,6 +21,8 @@ struct EmailStepView: View {
     @State private var showExpiredNotice: Bool = false
     private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     private var isExpired: Bool { showCodeField && remainingSeconds == 0 }
+    @FocusState private var emailFocused: Bool
+    @FocusState private var codeFocused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -35,7 +37,7 @@ struct EmailStepView: View {
             if userType != nil {
                 Text("이메일").foregroundStyle(.white.opacity(0.9)).bold()
                 HStack(spacing: 8) {
-                    OutlinedInputField(text: $email, placeholder: "이메일을 입력하세요", systemImage: "envelope", isSecure: false, keyboardType: .emailAddress)
+                    OutlinedInputField(text: $email, placeholder: "이메일을 입력하세요", systemImage: "envelope", isSecure: false, keyboardType: .emailAddress, focus: $emailFocused)
                     PrimaryActionButton(title: isExpired ? "재전송하기" : "인증하기", titleFont: .system(size: 16, weight: .semibold), height: 22, isDisabled: email.isEmpty) {
                         // 입력창 표시 및 타이머 시작(서버 응답 대기 없이 즉시)
                         showCodeField = true
@@ -43,12 +45,19 @@ struct EmailStepView: View {
                         code = ""
                         startTimer()
                         onSend() // 서버에 발송 요청은 비동기 진행
+                        // 포커스를 코드 입력으로 이동
+                        emailFocused = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { codeFocused = true }
                     }
                     .frame(width: 100)
                 }
                 if showCodeField {
                     Text("이메일 인증번호").foregroundStyle(.white.opacity(0.9)).bold()
-                    OutlinedInputField(text: $code, placeholder: "인증번호", systemImage: "number", isSecure: false, keyboardType: .default)
+                    OutlinedInputField(text: $code, placeholder: "인증번호", systemImage: "number", isSecure: false, keyboardType: .numberPad, focus: $codeFocused)
+                        .onChange(of: code) { _, newValue in
+                            let digits = newValue.filter { $0.isNumber }
+                            if digits != newValue { code = digits }
+                        }
                     // 남은 시간 표시 (3분 카운트다운) - 우측 정렬
                     HStack {
                         Spacer()
@@ -81,13 +90,14 @@ struct EmailStepView: View {
             }
         }
         .onChange(of: showCodeField) { _, newValue in
-            if newValue { startTimer() } else { stopTimer() }
+            if newValue { startTimer(); codeFocused = true } else { stopTimer() }
         }
         .onReceive(ticker) { _ in
             guard showCodeField, timerActive, remainingSeconds > 0 else { return }
             remainingSeconds -= 1
             if remainingSeconds == 0 { timerActive = false }
         }
+        .onAppear { emailFocused = true }
     }
 }
 

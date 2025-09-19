@@ -8,9 +8,6 @@
 import Foundation
 
 // Keychain 연동으로 토큰을 보관합니다.
-
-
-
 // MARK: - 앱 전체에서 토큰을 관리하는 싱글톤 클래스
 // - accessToken 읽기
 // - accessToken 저장
@@ -29,6 +26,9 @@ final class TokenManager {
     // 새로운 Access Token을 저장
     func saveAccessToken(_ token: String) {
         KeychainManager.saveToken(token, forKey: "accessToken")
+        // 보안상 토큰 내용은 남기지 않고 메타 정보만 로깅합니다.
+        let length = token.count
+        AppLog.info("액세스 토큰 저장 완료 (length=\(length))", category: "AUTH")
     }
 
     // Refresh Token을 이용해 새로운 Access Token 발급받기

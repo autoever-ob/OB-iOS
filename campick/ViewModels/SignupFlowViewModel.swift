@@ -244,4 +244,38 @@ final class SignupFlowViewModel: ObservableObject {
             }
         }
     }
+
+    // 회원가입 완료 화면에서 자동 로그인 처리 후, ContentView가 UserState를 보고 홈 화면으로 전환됩니다.
+    func autoLoginAfterSignup() async {
+        do {
+            let res = try await AuthAPI.login(email: email, password: password)
+            TokenManager.shared.saveAccessToken(res.accessToken)
+            let u = res.user
+            let name = u?.name ?? u?.nickname ?? ""
+            let nick = u?.nickname ?? u?.name ?? ""
+            let phoneValue = u?.mobileNumber ?? phoneDashed()
+            let memberId = u?.memberId ?? u?.id ?? ""
+            let dealerId = u?.dealerId ?? ""
+            let role = u?.role ?? ""
+            await MainActor.run {
+                UserState.shared.saveUserData(
+                    name: name,
+                    nickName: nick,
+                    phoneNumber: phoneValue,
+                    memberId: memberId,
+                    dealerId: dealerId,
+                    role: role
+                )
+            }
+        } catch {
+            await MainActor.run {
+                if let app = error as? AppError {
+                    self.submitError = app.message
+                    switch app { case .cannotConnect, .hostNotFound, .network: self.showServerAlert = true; default: break }
+                } else {
+                    self.submitError = error.localizedDescription
+                }
+            }
+        }
+    }
 }
