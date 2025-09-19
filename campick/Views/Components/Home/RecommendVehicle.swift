@@ -8,6 +8,12 @@
 import SwiftUI
 
 struct RecommendVehicle: View {
+    
+//    let vehicles: [VehicleViewModel]
+    @StateObject private var viewModel =  HomeVehicleViewModel()
+    init() {
+        print("로딩 완")
+    }
     var body: some View {
         VStack(spacing: 16) {
             HStack {
@@ -35,9 +41,24 @@ struct RecommendVehicle: View {
             }
             
             VStack(spacing: 16) {
-                VehicleCard(image: "testImage1", title: "현대 포레스트", year: "2022년", distance: "15,000km", price: "8,900만원", rating: 4.8, badge: "NEW", badgeColor: AppColors.brandLightGreen)
-                VehicleCard(image: "testImage2", title: "기아 봉고 캠퍼", year: "2021년", distance: "32,000km", price: "4,200만원", rating: 4.6, badge: "HOT", badgeColor: AppColors.brandOrange)
+                ForEach(Array(viewModel.vehicles.enumerated()), id: \.element.id) { index, vehicle in
+                    VehicleCard(
+                        image: vehicle.thumbnailURL?.absoluteString ?? "testImage1",
+                        title: vehicle.title,
+                        year: viewModel.yearText(for: vehicle),
+                        milage: viewModel.mileageText(for: vehicle),
+                        price: viewModel.priceText(for: vehicle),
+                        likeCount: vehicle.likeCount ?? 0,
+                        badge: index == 0 ? "NEW" : (index == 1 ? "HOT" : nil),
+                        badgeColor: index == 0 ? AppColors.brandLightGreen : (index == 1 ? AppColors.brandOrange : .clear)
+                    )
+                }
             }
+            
+        }
+        .onAppear{
+            print("⭐️ RecommendVehicle onAppear 실행됨")
+            viewModel.loadRecommendVehicles()
         }
     }
 }
@@ -47,10 +68,10 @@ struct VehicleCard: View {
     var image: String
     var title: String
     var year: String
-    var distance: String
+    var milage: String
     var price: String
-    var rating: Double
-    var badge: String
+    var likeCount: Int
+    var badge: String?
     var badgeColor: Color
     
     var body: some View {
@@ -62,7 +83,7 @@ struct VehicleCard: View {
                     .cornerRadius(12)
                     .shadow(radius: 3)
                 
-                Text(badge)
+                Text(badge ?? "")
                     .font(.system(size:8))
                     .bold()
                     .padding(.vertical, 4)
@@ -93,7 +114,7 @@ struct VehicleCard: View {
                         .background(.ultraThinMaterial)
                         .cornerRadius(6)
                         .foregroundColor(.white.opacity(0.8))
-                    Text(distance)
+                    Text(milage)
                         .font(.caption)
                         .padding(4)
                         .background(.ultraThinMaterial)
@@ -110,7 +131,7 @@ struct VehicleCard: View {
                         Image(systemName: "star.fill")
                             .foregroundColor(.yellow)
                             .font(.caption)
-                        Text(String(format: "%.1f", rating))
+                        Text(String(likeCount))
                             .foregroundColor(.yellow)
                             .font(.caption)
                     }

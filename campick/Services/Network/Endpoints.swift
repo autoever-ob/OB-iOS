@@ -12,9 +12,10 @@ enum Endpoint: String {
     case login = "/auth/login"
     case userInfo = "/user/info"
     case carInfo = "/car/info"
+    case carRecommend = "/product/recommend"
 
     var url: String {
-        "https://cam-pick.com/" + rawValue
+        "https://cam-pick.com" + rawValue
     }
 }
 
