@@ -78,81 +78,77 @@ struct ChatRoomListView: View {
             isOnline: false
         )
     ]
+    @State private var showFindVehicle = false
     var body: some View {
-            VStack(alignment: .center) {
-                if rooms.isEmpty {
-                    VStack {
-                        Circle()
-                            .fill(Color.white.opacity(0.1))
-                            .frame(width: 80, height: 80)
-                            .overlay(
-                                Image(systemName: "message")
-                                    .foregroundColor(.white.opacity(0.4))
-                                    .font(.system(size: 28))
-                            )
-                            .padding(.bottom, 8)
-                        
-                        Text("진행중인 채팅이 없습니다")
-                            .foregroundColor(.white)
-                            .font(.headline)
-                        Text("매물에 관심이 있으시면 판매자에게 메시지를 보내보세요!")
-                            .foregroundColor(.white.opacity(0.6))
-                            .font(.caption)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                            .padding(.bottom, 16)
-                        
-                        Button(action: { }) {
-                            Text("매물 찾아보기")
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(Color.orange)
-                                .foregroundColor(.white)
-                                .cornerRadius(30)
-                        }
-                        .padding(.horizontal, 40)
-                    }
-                    .frame(maxHeight: .infinity)
-                } else {
-                    List {
-                        ForEach(rooms) { room in
-                            ChatRoomRow(room: room)
-                            //                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    selectedRoom = room
-                                }
-                                .listRowInsets(EdgeInsets())
-                                .listRowSeparator(.hidden)
-                                .listRowBackground(Color.clear)
-                                .padding(.bottom,10)
-                        }
-                        .onDelete {indexSet in
-                            rooms.remove(atOffsets: indexSet)
-                        }
-                    }
-                    .padding()
-                    .listStyle(.plain)
-                    .navigationDestination(item: $selectedRoom) { room in
-                        ChatRoomView(
-                            seller: ChatSeller(id: "1", name: "박우진", avatar: "tiffany", isOnline: true, lastSeen: Date(),phoneNumber: "010-1234-1234"),
-                            vehicle: ChatVehicle(id: "1", title: "현대 포레스트 프리미엄", price: 8900, status: "판매중", image: "https://picsum.photos/200/120?random=3")
+        VStack(alignment: .center) {
+            if rooms.isEmpty {
+                VStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.1))
+                        .frame(width: 80, height: 80)
+                        .overlay(
+                            Image(systemName: "message")
+                                .foregroundColor(.white.opacity(0.4))
+                                .font(.system(size: 28))
                         )
-                        .navigationBarHidden(true)   // 네비게이션 바 숨김
-                        .toolbar(.hidden, for: .navigationBar) // iOS 16 이상
-                    }
+                        .padding(.bottom, 8)
                     
+                    Text("진행중인 채팅이 없습니다")
+                        .foregroundColor(.white)
+                        .font(.headline)
+                    Text("매물에 관심이 있으시면 판매자에게 메시지를 보내보세요!")
+                        .foregroundColor(.white.opacity(0.6))
+                        .font(.caption)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                        .padding(.bottom, 16)
+                    
+                    Button(action: { showFindVehicle = true }) {
+                        Text("매물 찾아보기")
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(AppColors.brandOrange)
+                            .foregroundColor(.white)
+                            .cornerRadius(16)
+                    }
+                    .padding(.horizontal, 20)
                 }
+                .frame(maxHeight: .infinity)
+                .fullScreenCover(isPresented: $showFindVehicle) {
+                    FindVehicleView()
+                }
+            } else {
+                List {
+                    ForEach(rooms) { room in
+                        ChatRoomRow(room: room)
+                            .onTapGesture {
+                                selectedRoom = room
+                            }
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                            .padding(.bottom,10)
+                    }
+                    .onDelete {indexSet in
+                        rooms.remove(atOffsets: indexSet)
+                    }
+                }
+                .padding()
+                .listStyle(.plain)
+                .navigationDestination(item: $selectedRoom) { room in
+                    ChatRoomView(
+                        seller: ChatSeller(id: "1", name: "박우진", avatar: "tiffany", isOnline: true, lastSeen: Date(),phoneNumber: "010-1234-1234"),
+                        vehicle: ChatVehicle(id: "1", title: "현대 포레스트 프리미엄", price: 8900, status: "판매중", image: "https://picsum.photos/200/120?random=3")
+                    )
+                    .navigationBarHidden(true)   // 네비게이션 바 숨김
+                    .toolbar(.hidden, for: .navigationBar) // iOS 16 이상
+                }
+                
             }
-            .background(AppColors.brandBackground)
-            .navigationBarTitleDisplayMode(.inline)
-            //            .navigationDestination(for: ChatRoom.self) { room in
-            //                ChatView(sellerName: room.sellerName, sellerAvatar: room.sellerAvatar)
-            //            }
         }
-        
-        //        .safeAreaInset(edge: .bottom) {
-        //            BottomTabBarView(currentSelection: .home)
-        //        }
+        .background(AppColors.brandBackground)
+        .navigationBarTitleDisplayMode(.inline)
+    }
     
 }
 
@@ -199,10 +195,8 @@ struct ChatRoomRow: View {
                                 .background(Color.red)
                                 .foregroundColor(.white)
                                 .clipShape(Circle())
-                            
                         }
                     }
-                    
                 }
                 
                 HStack {
