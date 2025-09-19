@@ -15,17 +15,21 @@ struct OutlinedInputField: View {
     var isSecure: Bool = false
     @State private var isRevealed: Bool = false
     var keyboardType: UIKeyboardType? = nil
+    // Optional focus binding to allow parent to programmatically focus this field
+    var focus: FocusState<Bool>.Binding?
     
     init(text: Binding<String>,
              placeholder: String,
              systemImage: String? = nil,
              isSecure: Bool = false,
-             keyboardType: UIKeyboardType? = nil) {
+             keyboardType: UIKeyboardType? = nil,
+             focus: FocusState<Bool>.Binding? = nil) {
             self._text = text
             self.placeholder = placeholder
             self.systemImage = systemImage
             self.isSecure = isSecure
             self.keyboardType = keyboardType
+            self.focus = focus
         }
 
     
@@ -39,7 +43,8 @@ struct OutlinedInputField: View {
                 }
                 
                 if isSecure {
-                    TextField("", text: $text)
+                    // Plain TextField used for revealed state
+                    let plain = TextField("", text: $text)
                         .textContentType(.password)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
@@ -49,8 +54,7 @@ struct OutlinedInputField: View {
                         .frame(height: 22)
                         .opacity(isRevealed ? 1 : 0)
                         .allowsHitTesting(isRevealed)
-                    
-                    SecureField("", text: $text)
+                    let secured = SecureField("", text: $text)
                         .textContentType(.password)
                         .foregroundStyle(.white)
                         .tint(AppColors.brandOrange)
@@ -58,13 +62,20 @@ struct OutlinedInputField: View {
                         .frame(height: 22)
                         .opacity(isRevealed ? 0 : 1)
                         .allowsHitTesting(!isRevealed)
+                    if let focus {
+                        plain.focused(focus)
+                    } else { _ = plain }
+                    if let focus {
+                        secured.focused(focus)
+                    } else { _ = secured }
                 } else {
-                    TextField("", text: $text)
+                    let field = TextField("", text: $text)
                         .keyboardType(keyboardType ?? .emailAddress)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
                         .foregroundStyle(.white)
                         .tint(AppColors.brandOrange)
+                    if let focus { field.focused(focus) } else { _ = field }
                 }
             }
             
