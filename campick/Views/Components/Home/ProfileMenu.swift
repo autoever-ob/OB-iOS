@@ -119,7 +119,7 @@ struct ProfileMenu: View {
                     .ignoresSafeArea()
                 }
                 .navigationDestination(isPresented: $navigateToProfile) {
-                    ProfileView(userId: userState.memberId, isOwnProfile: true)
+                    ProfileView(memberId: userState.memberId, isOwnProfile: true)
                 }
                 .frame(width: 280)
                 .offset(x: showSlideMenu ? 0 : 300) // 오른쪽에서 슬라이드

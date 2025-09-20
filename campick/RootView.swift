@@ -26,11 +26,11 @@ struct RootView: View {
                                 case .vehicles:
                                     FindVehicleView()
                                 case .register:
-                                    VehicleRegistrationView()
+                                    VehicleRegistrationView(showBackButton: false)
                                 case .favorites:
                                     FavoritesView()
                                 case .profile:
-                                    ProfileView(userId: "1", isOwnProfile: true)
+                                    ProfileView(memberId: "1", isOwnProfile: true, showBackButton: false)
                                 }
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
