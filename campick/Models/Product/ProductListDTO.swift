@@ -1,7 +1,31 @@
 import Foundation
 
 struct ProductListDTO: Decodable {
+    let totalElements: Int
+    let totalPages: Int
+    let size: Int
     let content: [ProductItemDTO]
-    // 기타 페이징 필드는 필요 시 확장
+    let number: Int
+    let sort: ProductSortDTO
+    let pageable: ProductPageableDTO
+    let numberOfElements: Int
+    let first: Bool
+    let last: Bool
+    let empty: Bool
+}
+
+struct ProductSortDTO: Decodable {
+    let empty: Bool
+    let sorted: Bool
+    let unsorted: Bool
+}
+
+struct ProductPageableDTO: Decodable {
+    let offset: Int
+    let sort: ProductSortDTO
+    let paged: Bool
+    let pageNumber: Int
+    let pageSize: Int
+    let unpaged: Bool
 }
 
