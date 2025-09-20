@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct HomeView: View {
-    @State private var showSlideMenu = false
+    @Binding var showSlideMenu : Bool
     @StateObject private var viewModel = HomeChatViewModel()
     
     
@@ -42,7 +42,7 @@ struct HomeView: View {
     //                }
                 }
                 // 슬라이드 메뉴
-                ProfileMenu(showSlideMenu: $showSlideMenu)
+//                ProfileMenu(showSlideMenu: $showSlideMenu)
     //                .allowsHitTesting(showSlideMenu)
             }
             .onAppear {
@@ -55,7 +55,7 @@ struct HomeView: View {
 
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
-        HomeView()
+//        HomeView(showSlideMenu: $show)
     }
 }
 

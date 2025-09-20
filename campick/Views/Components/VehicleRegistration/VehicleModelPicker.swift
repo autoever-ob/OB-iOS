@@ -1,17 +1,17 @@
 //
-//  VehicleTypePicker.swift
+//  VehicleModelPicker.swift
 //  campick
 //
-//  Created by 김호집 on 9/17/25.
+//  Created by 호집 on 9/20/25.
 //
 
 import SwiftUI
 
-struct VehicleTypePicker: View {
-    @Binding var vehicleType: String
-    @Binding var showingVehicleTypePicker: Bool
+struct VehicleModelPicker: View {
+    @Binding var vehicleModel: String
+    @Binding var showingModelPicker: Bool
     @Binding var errors: [String: String]
-    let availableTypes: [String]
+    let availableModels: [String]
 
     var body: some View {
         NavigationView {
@@ -20,19 +20,19 @@ struct VehicleTypePicker: View {
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    ForEach(availableTypes, id: \.self) { type in
+                    ForEach(availableModels, id: \.self) { model in
                         Button(action: {
-                            vehicleType = type
-                            errors["vehicleType"] = nil
-                            showingVehicleTypePicker = false
+                            vehicleModel = model
+                            errors["vehicleModel"] = nil
+                            showingModelPicker = false
                         }) {
                             HStack {
-                                Image(systemName: getIconForType(type))
+                                Image(systemName: "car.side")
                                     .foregroundColor(AppColors.brandOrange)
                                     .font(.system(size: 16))
                                     .frame(width: 24)
 
-                                Text(type)
+                                Text(model)
                                     .foregroundColor(.white)
                                     .font(.system(size: 16))
 
@@ -44,7 +44,7 @@ struct VehicleTypePicker: View {
                         }
                         .buttonStyle(PlainButtonStyle())
 
-                        if type != availableTypes.last {
+                        if model != availableModels.last {
                             Divider()
                                 .background(AppColors.primaryText.opacity(0.1))
                         }
@@ -53,22 +53,12 @@ struct VehicleTypePicker: View {
                     Spacer()
                 }
             }
-            .navigationTitle("차량 종류 선택")
+            .navigationTitle("차량 모델 선택")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarItems(trailing: Button("닫기") {
-                showingVehicleTypePicker = false
+                showingModelPicker = false
             })
         }
         .preferredColorScheme(.dark)
-    }
-
-    private func getIconForType(_ type: String) -> String {
-        switch type.lowercased() {
-        case "모터홈": return "house.circle"
-        case "픽업트럭": return "truck.box"
-        case "suv": return "car.side"
-        case "밴": return "bus"
-        default: return "car"
-        }
     }
 }

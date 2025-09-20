@@ -2,13 +2,29 @@
 //  ProductAPI.swift
 //  campick
 //
-//  Created by Assistant on 9/19/25.
+//  Created by 호집 on 9/19/25.
 //
 
 import Foundation
 import Alamofire
 
 enum ProductAPI {
+    static func fetchProductInfo() async throws -> ProductInfoResponse {
+        do {
+            let request = APIService.shared
+                .request(Endpoint.productInfo.url, method: .get)
+                .validate()
+            let wrapped = try await request.serializingDecodable(ProductInfoApiResponse.self).value
+            if wrapped.success, let data = wrapped.data {
+                return data
+            } else {
+                throw NSError(domain: "ProductInfoError", code: -1, userInfo: [NSLocalizedDescriptionKey: wrapped.message])
+            }
+        } catch {
+            throw ErrorMapper.map(error)
+        }
+    }
+
     static func fetchProducts(page: Int? = nil, size: Int? = nil) async throws -> ProductListDTO {
         do {
             var params: [String: Any] = [:]
