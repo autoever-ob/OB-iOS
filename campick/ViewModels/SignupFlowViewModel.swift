@@ -64,10 +64,18 @@ final class SignupFlowViewModel: ObservableObject {
     @Published var emailCode: String = ""
     @Published var emailError: String? = nil
     @Published var isEmailSending: Bool = false
+    @Published var showEmailMismatchModal: Bool = false
+    @Published var showEmailDuplicateModal: Bool = false
 
     func emailOnTapVerify() { /* handled by sendEmailCode() */ }
     func emailOnChangeCode(_ value: String) { emailCode = value.filter { $0.isNumber } }
-    func emailNext() { if !emailCode.isEmpty { Task { await confirmEmail() } } }
+    func emailNext() {
+        if !emailCode.isEmpty {
+            showEmailMismatchModal = false
+            showEmailDuplicateModal = false
+            Task { await confirmEmail() }
+        }
+    }
 
     // Password
     @Published var password: String = ""
@@ -210,12 +218,22 @@ final class SignupFlowViewModel: ObservableObject {
             try await AuthAPI.sendEmailCode(email: email)
             await MainActor.run {
                 self.showEmailCodeField = true
+                self.showEmailMismatchModal = false
+                self.showEmailDuplicateModal = false
             }
         } catch {
             await MainActor.run {
                 if let app = error as? AppError {
                     self.emailError = app.message
-                    switch app { case .cannotConnect, .hostNotFound, .network: self.showServerAlert = true; default: break }
+                    switch app {
+                    case .cannotConnect, .hostNotFound, .network:
+                        self.showServerAlert = true
+                    case .server(let code, _):
+                        if code == 400 {
+                            self.showEmailDuplicateModal = true
+                        }
+                    default: break
+                    }
                 } else {
                     self.emailError = error.localizedDescription
                 }
@@ -231,15 +249,26 @@ final class SignupFlowViewModel: ObservableObject {
         do {
             try await AuthAPI.confirmEmailCode(code: emailCode)
             await MainActor.run {
+                self.showEmailMismatchModal = false
                 self.go(to: .password)
             }
         } catch {
             await MainActor.run {
                 if let app = error as? AppError {
                     self.emailError = app.message
-                    switch app { case .cannotConnect, .hostNotFound, .network: self.showServerAlert = true; default: break }
+                    switch app {
+                    case .cannotConnect, .hostNotFound, .network:
+                        self.showServerAlert = true
+                    default:
+                        self.showEmailMismatchModal = true
+                        self.emailCode = ""
+                        self.showEmailDuplicateModal = false
+                    }
                 } else {
                     self.emailError = error.localizedDescription
+                    self.showEmailMismatchModal = true
+                    self.emailCode = ""
+                    self.showEmailDuplicateModal = false
                 }
             }
         }
