@@ -20,6 +20,8 @@ class WebSocket {
         
         // 연결 후 수신 시작
         receive()
+        
+        startPing()
     }
     
     private func receive() {
@@ -40,6 +42,20 @@ class WebSocket {
             
             // 계속 대기
             self?.receive()
+        }
+    }
+    
+    // Pong 확인 시 completion 핸들러 호출
+    func startPing() {
+        webSocketTask?.sendPing { error in
+            if let error = error {
+                print("Ping 실패: \(error)")
+            } else {
+                print("Ping 성공: 연결 유지 중")
+            }
+            DispatchQueue.global().asyncAfter(deadline: .now() + 10) {
+                self.startPing()
+            }
         }
     }
     
