@@ -26,7 +26,7 @@ struct RootView: View {
                                 case .vehicles:
                                     FindVehicleView()
                                 case .register:
-                                    VehicleRegistrationView()
+                                    VehicleRegistrationView(showBackButton: false)
                                 case .favorites:
                                     FavoritesView()
                                 case .profile:

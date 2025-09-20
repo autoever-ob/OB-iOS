@@ -10,6 +10,8 @@ import PhotosUI
 import UIKit
 
 struct VehicleRegistrationView: View {
+    let showBackButton: Bool // 뒤로가기 버튼 표시 여부
+
     @State private var vehicleImages: [VehicleImage] = []
     @State private var uploadedImageUrls: [String] = []
     @State private var selectedPhotos: [PhotosPickerItem] = []
@@ -38,14 +40,21 @@ struct VehicleRegistrationView: View {
     @State private var isLoadingProductInfo = false
     @Environment(\.dismiss) private var dismiss
 
+    init(showBackButton: Bool = true) {
+        self.showBackButton = showBackButton
+    }
+
     var body: some View {
         ZStack {
             AppColors.background
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                TopBarView(title: "차량매물등록") {
-                    dismiss()
+                // 뒤로가기 버튼이 필요한 경우에만 TopBarView 표시
+                if showBackButton {
+                    TopBarView(title: "차량매물등록") {
+                        dismiss()
+                    }
                 }
 
                 GeometryReader { geometry in
