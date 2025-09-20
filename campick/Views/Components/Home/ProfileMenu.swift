@@ -126,7 +126,7 @@ struct ProfileMenu: View {
                 .environmentObject(UserState.shared)
             }
         }
-        
+        .zIndex(300)
         
     }
 }
