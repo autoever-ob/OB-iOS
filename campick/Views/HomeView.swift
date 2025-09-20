@@ -35,9 +35,9 @@ struct HomeView: View {
                     }
                     .padding()
                 }
-                .safeAreaInset(edge: .bottom) {
-                    BottomTabBarView(currentSelection: .home)
-                }
+//                .safeAreaInset(edge: .bottom) {
+//                    BottomTabBarView(currentSelection: .home)
+//                }
             }
             // 슬라이드 메뉴
             ProfileMenu(showSlideMenu: $showSlideMenu)

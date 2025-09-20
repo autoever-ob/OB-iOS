@@ -61,9 +61,9 @@ struct ProfileMenu: View {
                                         Text(userState.name.isEmpty ? "사용자님" : userState.name)
                                             .font(.system(size: 14, weight: .heavy))
                                             .foregroundColor(.white)
-                                        Text(userState.nickName.isEmpty ? "캠핑카 애호가" : userState.nickName)
-                                            .font(.system(size: 11))
-                                            .foregroundColor(.white.opacity(0.6))
+//                                        Text(userState.nickName.isEmpty ? "캠핑카 애호가" : userState.nickName)
+//                                            .font(.system(size: 11))
+//                                            .foregroundColor(.white.opacity(0.6))
                                     }
                                     .padding(.leading, 2)
                                 }

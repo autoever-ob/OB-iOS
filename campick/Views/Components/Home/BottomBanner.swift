@@ -6,16 +6,60 @@
 //
 
 import SwiftUI
+import AVKit
 
 struct BottomBanner: View {
+    
+    @State private var player: AVPlayer? = {
+        if let path = Bundle.main.path(forResource: "bottomBanner", ofType: "mov") {
+            let url = URL(fileURLWithPath: path)
+            return AVPlayer(url: url)}
+        return nil} ()
+    @State private var endObserver: NSObjectProtocol? = nil
+    
     var body: some View {
         ZStack {
-            Image("bottomBannerImage")
-                .resizable()
-                .scaledToFill()
-                .frame(height: 140)
-                .cornerRadius(16)
-                .clipped()
+            if let player = player {
+                VideoPlayer(player: player)
+                    .frame(height: 140)
+                    .cornerRadius(16)
+                    .clipped()
+                    .onAppear {
+                        player.isMuted = true
+                        player.play()
+                        player.actionAtItemEnd = .none
+                        endObserver = NotificationCenter.default.addObserver(
+                            forName: .AVPlayerItemDidPlayToEndTime,
+                            object: player.currentItem,
+                            queue: .main
+                        ) { _ in
+                            player.seek(to: .zero)
+                            player.play()
+                        }
+                    }
+                    .onDisappear {
+                        player.pause()
+                        if let endObserver {
+                            NotificationCenter.default.removeObserver(endObserver)
+                            self.endObserver = nil
+                        }
+                    }
+            } else {
+                Color.black.frame(height: 140).cornerRadius(16)
+                #if DEBUG
+                Text("Missing bottomBanner.mp4")
+                    .foregroundColor(.white)
+                    .font(.caption)
+                #endif
+            }
+            
+
+//            Image("bottomBannerImage")
+//                .resizable()
+//                .scaledToFill()
+//                .frame(height: 140)
+//                .cornerRadius(16)
+//                .clipped()
             
             LinearGradient(
                 gradient: Gradient(colors: [.black.opacity(0.7), .clear]),
@@ -40,7 +84,7 @@ struct BottomBanner: View {
                         .fontWeight(.heavy)
                 }
                 Spacer()
-                Button(action: {}) {
+                NavigationLink(destination: EventDetailView()) {
                     Text("자세히 보기")
                         .bold()
                         .font(.system(size: 11))
