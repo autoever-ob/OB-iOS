@@ -13,30 +13,127 @@ import Foundation
 // - accessToken 저장
 // - refreshToken API 호출
 final class TokenManager {
-    // 싱글톤 인스턴스 (앱 전체에서 하나만 사용)
     static let shared = TokenManager()
-    private init() {}
 
+    private init() {}
+    
     // 현재 저장된 Access Token 반환
     // 없으면 ""(빈 문자열) 리턴
+    private let tokenKey = "accessToken"
+    private let issuedAtKey = "accessTokenIssuedAt"
+    private let refreshInterval: TimeInterval = 25 * 60 // 토큰 발급 후 25분이 지나면 재발급
+    
+    private let defaults = UserDefaults.standard
+    private let timerQueue = DispatchQueue(label: "campick.token.refresh.queue")
+
+    private var refreshTimer: DispatchSourceTimer?
+
+    // MARK: - Public Properties
     var accessToken: String {
-        KeychainManager.getToken(forKey: "accessToken") ?? ""
+        KeychainManager.getToken(forKey: tokenKey) ?? ""
     }
 
-    // 새로운 Access Token을 저장
+    var hasValidAccessToken: Bool { !accessToken.isEmpty }
+
+    // MARK: - Issue date helpers
+    private var lastIssuedAt: Date? {
+        let timestamp = defaults.double(forKey: issuedAtKey)
+        guard timestamp > 0 else { return nil }
+        return Date(timeIntervalSince1970: timestamp)
+    }
+
+    private func storeIssueDate(_ date: Date) {
+        defaults.set(date.timeIntervalSince1970, forKey: issuedAtKey)
+    }
+
+    private func resetIssueDate() {
+        defaults.removeObject(forKey: issuedAtKey)
+    }
+
+    // MARK: - Save / Clear
     func saveAccessToken(_ token: String) {
-        KeychainManager.saveToken(token, forKey: "accessToken")
-        // 보안상 토큰 내용은 남기지 않고 메타 정보만 로깅합니다.
-        let length = token.count
-        AppLog.info("액세스 토큰 저장 완료 (length=\(length))", category: "AUTH")
+        KeychainManager.saveToken(token, forKey: tokenKey)
+        storeIssueDate(Date()) // 새로운 발급 시각 저장
+        AppLog.info("엑세스 토큰 저장 완료 (length=\(token.count))", category: "AUTH")
+        scheduleAutoRefresh() // 발급 직후 타이머 재설정
     }
 
-    // Refresh Token을 이용해 새로운 Access Token 발급받기
-    // 실제 API 호출 부분은 아직 미구현
-    // completion(true) → 갱신 성공
-    // completion(false) → 갱신 실패
-    func refreshToken(completion: @escaping (Bool) -> Void) {
-        // 현재는 액세스 토큰만 사용하므로 리프레시 미사용
-        completion(false)
+    func clearAll() {
+        cancelAutoRefresh()
+        resetIssueDate()
+        KeychainManager.deleteToken(forKey: tokenKey)
+    }
+
+    // MARK: - Timer Handling
+    func scheduleAutoRefresh() {
+        guard hasValidAccessToken else { return }
+
+        let issuedAt: Date
+        if let stored = lastIssuedAt {
+            issuedAt = stored
+        } else {
+            issuedAt = Date()
+            storeIssueDate(issuedAt)
+        }
+
+        let fireInterval = issuedAt.addingTimeInterval(refreshInterval).timeIntervalSinceNow
+        cancelAutoRefresh()
+
+        if fireInterval <= 0 {
+            Task { await self.refreshAccessTokenIfNeeded(force: true) }
+            return
+        }
+
+        let timer = DispatchSource.makeTimerSource(queue: timerQueue)
+        timer.schedule(deadline: .now() + fireInterval)
+        timer.setEventHandler { [weak self] in
+            guard let self else { return }
+            Task { await self.refreshAccessTokenIfNeeded(force: true) } // 타이머 발화 시 즉시 재발급 시도
+        }
+        timer.resume()
+        refreshTimer = timer
+    }
+
+    func cancelAutoRefresh() {
+        refreshTimer?.cancel()
+        refreshTimer = nil
+    }
+
+    // MARK: - Refresh Logic
+    func refreshAccessTokenIfNeeded(force: Bool = false) async {
+        guard hasValidAccessToken else { return }
+
+        let issuedAt: Date
+        if let stored = lastIssuedAt {
+            issuedAt = stored
+        } else {
+            issuedAt = Date()
+            storeIssueDate(issuedAt)
+        }
+
+        let elapsed = Date().timeIntervalSince(issuedAt)
+        guard force || elapsed >= refreshInterval else { return }
+
+        do {
+            let newToken = try await AuthAPI.reissueAccessToken()
+            await MainActor.run { self.saveAccessToken(newToken) }
+            AppLog.info("Access token reissued", category: "AUTH")
+        } catch {
+            AppLog.error("토큰 재발급 실패: \(error.localizedDescription)", category: "AUTH")
+            cancelAutoRefresh()
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: .tokenReissueFailed, object: nil) // UI 쪽에 재로그인 안내
+            }
+        }
+    }
+
+    // 앱이 active 상태가 되었을 때 호출
+    func handleAppDidBecomeActive() {
+        Task { await refreshAccessTokenIfNeeded() }
+        scheduleAutoRefresh()
+    }
+
+    func handleAppDidEnterBackground() {
+        scheduleAutoRefresh()
     }
 }

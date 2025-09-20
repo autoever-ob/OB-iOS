@@ -131,5 +131,21 @@ enum AuthAPI {
         }
     }
 
+    /// 저장된 액세스 토큰으로 재발급을 요청합니다.
+    static func reissueAccessToken() async throws -> String {
+        do {
+            let request = APIService.shared
+                .request(Endpoint.tokenReissue.url, method: .post)
+                .validate()
+            let wrapped = try await request.serializingDecodable(ApiResponse<LoginDataDTO>.self).value
+            guard let token = wrapped.data?.accessToken else {
+                throw AppError.decoding
+            }
+            return token
+        } catch {
+            throw ErrorMapper.map(error)
+        }
+    }
+
     // 회원탈퇴 API는 아직 미구현이므로 연동 제거
 }
