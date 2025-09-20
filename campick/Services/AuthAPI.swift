@@ -147,5 +147,12 @@ enum AuthAPI {
         }
     }
 
+    static func issueTemporaryPassword(email: String, verificationCode: String) async throws -> String {
+        // TODO: 서버의 임시 비밀번호 발급 API와 연동하세요. 현재는 개발 편의를 위한 더미 값입니다.
+        _ = email
+        _ = verificationCode
+        return "TEMP-1234"
+    }
+
     // 회원탈퇴 API는 아직 미구현이므로 연동 제거
 }
