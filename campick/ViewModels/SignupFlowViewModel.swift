@@ -66,15 +66,17 @@ final class SignupFlowViewModel: ObservableObject {
     @Published var isEmailSending: Bool = false
     @Published var showEmailMismatchModal: Bool = false
     @Published var showEmailDuplicateModal: Bool = false
+    @Published var termsAgreed: Bool = false
+    @Published var privacyAgreed: Bool = false
+    @Published var emailVerified: Bool = false
 
     func emailOnTapVerify() { /* handled by sendEmailCode() */ }
     func emailOnChangeCode(_ value: String) { emailCode = value.filter { $0.isNumber } }
     func emailNext() {
-        if !emailCode.isEmpty {
-            showEmailMismatchModal = false
-            showEmailDuplicateModal = false
-            Task { await confirmEmail() }
-        }
+        guard !emailCode.isEmpty, termsAgreed, privacyAgreed else { return }
+        showEmailMismatchModal = false
+        showEmailDuplicateModal = false
+        Task { await confirmEmail() }
     }
 
     // Password
@@ -209,10 +211,11 @@ final class SignupFlowViewModel: ObservableObject {
     }
 
     func sendEmailCode() async {
-        guard !email.isEmpty else { return }
+        guard !email.isEmpty, termsAgreed, privacyAgreed else { return }
         await MainActor.run {
             isEmailSending = true
             emailError = nil
+            emailVerified = false
         }
         do {
             try await AuthAPI.sendEmailCode(email: email)
@@ -249,11 +252,13 @@ final class SignupFlowViewModel: ObservableObject {
         do {
             try await AuthAPI.confirmEmailCode(code: emailCode)
             await MainActor.run {
+                self.emailVerified = true
                 self.showEmailMismatchModal = false
                 self.go(to: .password)
             }
         } catch {
             await MainActor.run {
+                self.emailVerified = false
                 if let app = error as? AppError {
                     self.emailError = app.message
                     switch app {
@@ -269,6 +274,7 @@ final class SignupFlowViewModel: ObservableObject {
                     self.showEmailMismatchModal = true
                     self.emailCode = ""
                     self.showEmailDuplicateModal = false
+                    self.emailVerified = false
                 }
             }
         }
