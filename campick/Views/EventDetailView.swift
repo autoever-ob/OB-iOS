@@ -50,21 +50,20 @@ struct EventDetailView: View {
                             VStack(alignment: .leading){
                                 Text("수수료 50% 할인 쿠폰 응모")
                                     .font(.title).bold()
-                                    .padding(.top,30)
+                                    .padding(.top,10)
                                     .padding(.bottom,1)
                                 Text("응모하고 수수료 50% 할인 쿠폰을 받아보세요")
                                     .font(.headline)
                                     .foregroundStyle(.secondary)
-                                    .padding(.bottom,50)
+                                    .padding(.bottom,30)
                                 
                                 
                                 Text("혜택")
                                     .font(.system(size: 22,weight: .bold))
                                     .padding(.bottom,1)
-                                Text("· 수수료 50% 할인 쿠폰 1매 제공\n· 쿠폰은 지정 카테고리에서 사용 가능")
+                                Text("· 수수료 50% 할인 쿠폰 1매 제공\n· 쿠폰은 지정 카테고리에서 사용 가능 \n· 다른 할인과 중복 적용 불가 (프로모션 코드 포함)\n· 쿠폰 지급 시점: 응모 즉시 계정에 자동 지급\n· 사용 기한: 발급일로부터 7일 이내")
                                     .font(.body)
                                     .padding(.bottom,15)
-                                
                                 
                                 
                                 Text("기간")
@@ -72,8 +71,7 @@ struct EventDetailView: View {
                                     .padding(.bottom,1)
                                 Text("응모 기간: 2025.09.01 ~ 2025.10.31")
                                     .font(.body)
-                                    .padding(.bottom,35)
-                                
+                                    .padding(.bottom,15)
                                 
                                 
                                 Text("유의사항")
