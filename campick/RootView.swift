@@ -11,7 +11,7 @@ struct RootView: View {
     @StateObject private var userState = UserState.shared
     @StateObject private var network = NetworkMonitor.shared
     @State private var currentTab: Tab = .home
-    
+    @State private var showSlideMenu = false
     var body: some View {
         ZStack(alignment: .top) {
             Group {
@@ -21,7 +21,7 @@ struct RootView: View {
                         Group {
                             switch currentTab {
                             case .home:
-                                HomeView()
+                                HomeView(showSlideMenu: $showSlideMenu)
                             case .vehicles:
                                 FindVehicleView()
                             case .register:
@@ -41,6 +41,12 @@ struct RootView: View {
                                 currentTab = selectedTab
                             }
                         )
+                        .zIndex(1)
+                        
+                        if showSlideMenu {
+                            ProfileMenu(showSlideMenu: $showSlideMenu)
+                                .zIndex(2)
+                        }
                     }
                     .id("loggedIn")
                 } else {
