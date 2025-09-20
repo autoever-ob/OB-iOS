@@ -33,7 +33,12 @@ final class AuthInterceptor: RequestInterceptor {
                 let token = TokenManager.shared.accessToken
                 if !token.isEmpty {
                     request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                    print("🔑 AuthInterceptor: Added Bearer token to \(url)")
+                } else {
+                    print("❌ AuthInterceptor: No token available for \(url)")
                 }
+            } else {
+                print("🚫 AuthInterceptor: Skipping auth for endpoint \(url)")
             }
         }
         completion(.success(request))
