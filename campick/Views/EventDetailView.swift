@@ -115,6 +115,7 @@ struct EventDetailView: View {
             .alert("응모가 완료되었습니다", isPresented: $showConfirmation) {
                 Button("확인", role: .cancel) { }
             }
+            .navigationBarBackButtonHidden(true)
         }
     }
 }
