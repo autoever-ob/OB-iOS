@@ -39,6 +39,8 @@ struct SignupFlowView: View {
                             code: $vm.emailCode,
                             showMismatchModal: $vm.showEmailMismatchModal,
                             showDuplicateModal: $vm.showEmailDuplicateModal,
+                            termsAgreed: $vm.termsAgreed,
+                            privacyAgreed: $vm.privacyAgreed,
                             onNext: { vm.emailNext() },
                             onSend: { Task { await vm.sendEmailCode() } },
                             onDuplicateLogin: { dismiss() },
