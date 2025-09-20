@@ -39,8 +39,8 @@ final class FindVehicleViewModel: ObservableObject {
     func fetchVehicles() {
         Task {
             do {
-                let items = try await ProductAPI.fetchProducts(page: 0, size: 30)
-                var mapped = items.map(mapToVehicle)
+                let response = try await ProductAPI.fetchProducts(page: 0, size: 30)
+                var mapped = response.content.map(mapToVehicle)
 
                 // 클라이언트 단 검색 필터
                 let q = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
@@ -64,7 +64,7 @@ final class FindVehicleViewModel: ObservableObject {
                 // 정렬 적용
                 switch selectedSort {
                 case .recentlyAdded:
-                    vehicles = mapped // API가 최신순이라 가정
+                    vehicles = mapped
                 case .lowPrice:
                     vehicles = mapped.sorted { priceValue($0.price) < priceValue($1.price) }
                 case .highPrice:
@@ -89,10 +89,10 @@ final class FindVehicleViewModel: ObservableObject {
         switch dto.status.uppercased() {
         case "AVAILABLE": status = .active
         case "RESERVED": status = .reserved
-        case "SOLD": status = .sold
+        case "SOLD", "SOLD_OUT": status = .sold
         default: status = .active
         }
-        // 제목에서 연식을 간단 추출(없으면 "-")
+        let locationText = "\(dto.location.province) \(dto.location.city)"
         let extractedYear: String = {
             let pattern = "(20[0-4][0-9]|19[0-9]{2})"
             if let range = dto.title.range(of: pattern, options: .regularExpression) {
@@ -108,9 +108,9 @@ final class FindVehicleViewModel: ObservableObject {
             price: dto.price,
             year: extractedYear,
             mileage: dto.mileage,
-            fuelType: "-",
-            transmission: "-",
-            location: dto.location,
+            fuelType: dto.fuelType,
+            transmission: dto.transmission,
+            location: locationText,
             status: status,
             postedDate: dto.createdAt,
             isOnSale: status == .active,
