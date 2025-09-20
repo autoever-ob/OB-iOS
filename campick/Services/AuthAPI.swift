@@ -147,5 +147,16 @@ enum AuthAPI {
         }
     }
 
+    static func changePassword(_ request: PasswordChangeRequest) async throws {
+        do {
+            let apiRequest = APIService.shared
+                .request(Endpoint.changePassword.url, method: .patch, parameters: request, encoder: JSONParameterEncoder.default)
+                .validate()
+            _ = try await apiRequest.serializingData().value
+        } catch {
+            throw ErrorMapper.map(error)
+        }
+    }
+
     // 회원탈퇴 API는 아직 미구현이므로 연동 제거
 }
