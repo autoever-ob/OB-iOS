@@ -32,6 +32,7 @@ struct HomeView: View {
                         RecommendVehicle()
                         // 하단 배너
                         BottomBanner()
+                            .padding(.bottom,70)
                     }
                     .padding()
                 }
