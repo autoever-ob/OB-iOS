@@ -12,6 +12,7 @@ final class LoginViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
     @Published var showServerAlert: Bool = false
+    @Published var showSignupPrompt: Bool = false
 
     var isLoginDisabled: Bool { email.isEmpty || password.isEmpty || isLoading }
 
@@ -19,6 +20,8 @@ final class LoginViewModel: ObservableObject {
         guard !isLoginDisabled else { return }
         isLoading = true
         errorMessage = nil
+        showServerAlert = false
+        showSignupPrompt = false
         Task {
             defer { isLoading = false }
             do {
@@ -44,12 +47,15 @@ final class LoginViewModel: ObservableObject {
                 )
             } catch {
                 if let appError = error as? AppError {
-                    errorMessage = appError.message
                     switch appError {
+                    case .notFound:
+                        errorMessage = nil
+                        showSignupPrompt = true
                     case .cannotConnect, .hostNotFound, .network:
+                        errorMessage = appError.message
                         showServerAlert = true
                     default:
-                        break
+                        errorMessage = appError.message
                     }
                 } else {
                     errorMessage = error.localizedDescription
@@ -58,4 +64,3 @@ final class LoginViewModel: ObservableObject {
         }
     }
 }
-

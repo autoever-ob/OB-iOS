@@ -10,6 +10,7 @@ import SwiftUI
 struct LoginView: View {
     @StateObject private var vm = LoginViewModel()
     @StateObject private var userState = UserState.shared
+    @State private var navigateToSignup = false
 
     var body: some View {
         NavigationStack {
@@ -17,6 +18,9 @@ struct LoginView: View {
                 AppColors.background
                     .ignoresSafeArea()
                 VStack(spacing: 4) {
+                    NavigationLink(destination: SignupFlowView(), isActive: $navigateToSignup) {
+                        EmptyView()
+                    }
                     VStack {
                         Text("Campick")
                             .font(.basicFont(size: 40))
@@ -121,9 +125,26 @@ struct LoginView: View {
                     .padding(.top, 112)
                 }
             }
-            .alert("서버 연결이 불안정합니다. 잠시후 다시 시도해 주세요", isPresented: $vm.showServerAlert) {
-                Button("확인", role: .cancel) {}
+        }
+        .alert(
+            "존재하지 않는 사용자입니다.",
+            isPresented: $vm.showSignupPrompt,
+            actions: {
+                Button("Campick과 함께하기") {
+                    DispatchQueue.main.async {
+                        navigateToSignup = true
+                    }
+                }
+                Button("닫기", role: .cancel) {}
+            },
+            message: {
+                Text("Campick과 함께 새로운 계정을 만들어보세요.")
+                    .font(.footnote)
+                    .foregroundColor(AppColors.brandWhite70)
             }
+        )
+        .alert("서버 연결이 불안정합니다. 잠시후 다시 시도해 주세요", isPresented: $vm.showServerAlert) {
+            Button("확인", role: .cancel) {}
         }
     }
 }
