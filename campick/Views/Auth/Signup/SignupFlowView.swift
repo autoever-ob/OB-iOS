@@ -11,13 +11,17 @@ struct SignupFlowView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var vm = SignupFlowViewModel()
     // 회원가입 완료 후 자동 로그인으로 홈 전환은 UserState에 의해 처리됩니다.
-
+    @State private var navigateToFindPassword = false
     
 
     var body: some View {
         ZStack {
             AppColors.brandBackground.ignoresSafeArea()
             VStack(spacing: 0) {
+                NavigationLink(destination: FindPasswordView(), isActive: $navigateToFindPassword) {
+                    EmptyView()
+                }
+
                 TopBarView(title: vm.title()) { vm.goBack { dismiss() } }
 
                 SignupProgress(progress: vm.progress, startFrom: vm.prevProgress)
@@ -33,8 +37,14 @@ struct SignupFlowView: View {
                             email: $vm.email,
                             showCodeField: $vm.showEmailCodeField,
                             code: $vm.emailCode,
+                            showMismatchModal: $vm.showEmailMismatchModal,
+                            showDuplicateModal: $vm.showEmailDuplicateModal,
+                            termsAgreed: $vm.termsAgreed,
+                            privacyAgreed: $vm.privacyAgreed,
                             onNext: { vm.emailNext() },
-                            onSend: { Task { await vm.sendEmailCode() } }
+                            onSend: { Task { await vm.sendEmailCode() } },
+                            onDuplicateLogin: { dismiss() },
+                            onDuplicateFindPassword: { navigateToFindPassword = true }
                         )
                     case .password:
                         PasswordStepView(password: $vm.password, confirm: $vm.confirm, errorMessage: $vm.passwordError) { vm.passwordNext() }
