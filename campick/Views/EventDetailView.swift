@@ -8,6 +8,9 @@ struct EventDetailView: View {
         ZStack{
             AppColors.brandBackground.ignoresSafeArea(.container, edges: .all)
             VStack {
+                TopBarView(title: "매물 찾기") {
+                                dismiss()
+                            }
                 ScrollView {
                     VStack() {
                         ZStack {
