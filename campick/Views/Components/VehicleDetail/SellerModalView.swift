@@ -52,7 +52,7 @@ struct SellerModalView: View {
                 }
             }
             .navigationDestination(isPresented: $showSellerProfile) {
-                ProfileView(userId: viewModel.seller.id, isOwnProfile: false)
+                ProfileView(memberId: viewModel.seller.id, isOwnProfile: false, showBackButton: true)
             }
         }
     }

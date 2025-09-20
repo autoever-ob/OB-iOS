@@ -11,6 +11,7 @@ import UIKit
 
 struct VehicleRegistrationView: View {
     @State private var vehicleImages: [VehicleImage] = []
+    @State private var uploadedImageUrls: [String] = []
     @State private var selectedPhotos: [PhotosPickerItem] = []
     @State private var title: String = ""
     @State private var mileage: String = ""
@@ -21,15 +22,20 @@ struct VehicleRegistrationView: View {
     @State private var vehicleModel: String = ""
     @State private var location: String = ""
     @State private var plateHash: String = ""
-    @State private var vehicleOptions: [VehicleOption] = defaultVehicleOptions
+    @State private var vehicleOptions: [VehicleOption] = []
     @State private var showingVehicleTypePicker = false
     @State private var showingImagePicker = false
     @State private var showingOptionsPicker = false
+    @State private var showingModelPicker = false
     @State private var errors: [String: String] = [:]
     @State private var isSubmitting = false
     @State private var showingSuccessAlert = false
     @State private var showingErrorAlert = false
     @State private var alertMessage = ""
+    @State private var availableTypes: [String] = []
+    @State private var availableModels: [String] = []
+    @State private var availableOptions: [String] = []
+    @State private var isLoadingProductInfo = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -49,6 +55,7 @@ struct VehicleRegistrationView: View {
 
                         VehicleImageUploadSection(
                             vehicleImages: $vehicleImages,
+                            uploadedImageUrls: $uploadedImageUrls,
                             selectedPhotos: $selectedPhotos,
                             showingImagePicker: $showingImagePicker,
                             errors: $errors
@@ -90,15 +97,15 @@ struct VehicleRegistrationView: View {
                         VehicleTypeSection(
                             vehicleType: $vehicleType,
                             showingVehicleTypePicker: $showingVehicleTypePicker,
-                            errors: errors
+                            errors: errors,
+                            availableTypes: availableTypes
                         )
 
-                        VehicleInputField(
-                            title: "차량 브랜드/모델",
-                            placeholder: "브랜드/모델을 입력하세요 (예: 현대 스타렉스)",
-                            text: $vehicleModel,
+                        VehicleModelSection(
+                            vehicleModel: $vehicleModel,
+                            showingModelPicker: $showingModelPicker,
                             errors: errors,
-                            errorKey: "vehicleModel"
+                            availableModels: availableModels
                         )
 
                         VehicleInputField(
@@ -120,7 +127,7 @@ struct VehicleRegistrationView: View {
                             errorKey: "location"
                         )
 
-                        VehicleInputField(
+                        PlateNumberInputField(
                             title: "차량 번호",
                             placeholder: "123가4567",
                             text: $plateHash,
@@ -149,7 +156,7 @@ struct VehicleRegistrationView: View {
                         VehicleSubmitButton(action: handleSubmit, isLoading: isSubmitting)
                     }
                     .padding(.horizontal, 16)
-                    .padding(.bottom, 32)
+                    .padding(.bottom, 120) // 하단 탭바(~80px) + 여유공간(40px)
                     }
                     .frame(maxWidth: .infinity)
                     .frame(minHeight: geometry.size.height)
@@ -160,13 +167,22 @@ struct VehicleRegistrationView: View {
             VehicleTypePicker(
                 vehicleType: $vehicleType,
                 showingVehicleTypePicker: $showingVehicleTypePicker,
-                errors: $errors
+                errors: $errors,
+                availableTypes: availableTypes
             )
         }
         .sheet(isPresented: $showingOptionsPicker) {
             VehicleOptionsPicker(
                 vehicleOptions: $vehicleOptions,
                 showingOptionsPicker: $showingOptionsPicker
+            )
+        }
+        .sheet(isPresented: $showingModelPicker) {
+            VehicleModelPicker(
+                vehicleModel: $vehicleModel,
+                showingModelPicker: $showingModelPicker,
+                errors: $errors,
+                availableModels: availableModels
             )
         }
         .alert("등록 완료", isPresented: $showingSuccessAlert) {
@@ -183,6 +199,9 @@ struct VehicleRegistrationView: View {
         }
         .navigationBarHidden(true)
         .toolbar(.hidden, for: .navigationBar)
+        .task {
+            await loadProductInfo()
+        }
     }
 
     private func formatNumber(_ value: String) -> String {
@@ -194,6 +213,11 @@ struct VehicleRegistrationView: View {
             return formatter.string(from: NSNumber(value: number)) ?? numbers
         }
         return ""
+    }
+
+    private func isValidKoreanPlate(_ plateNumber: String) -> Bool {
+        let koreanPlateRegex = "^\\d{2,3}[가-힣]\\d{4}$"
+        return plateNumber.range(of: koreanPlateRegex, options: .regularExpression) != nil
     }
 
 
@@ -233,8 +257,11 @@ struct VehicleRegistrationView: View {
             newErrors["location"] = "판매 지역을 입력해주세요"
         }
 
-        if plateHash.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        let trimmedPlateHash = plateHash.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmedPlateHash.isEmpty {
             newErrors["plateHash"] = "차량 번호를 입력해주세요"
+        } else if !isValidKoreanPlate(trimmedPlateHash) {
+            newErrors["plateHash"] = "올바른 번호판 형식을 입력하세요 (예: 123가4567)"
         }
 
         if description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -251,22 +278,25 @@ struct VehicleRegistrationView: View {
     private func submitVehicleRegistration() {
         isSubmitting = true
 
-        // TODO: Implement actual image upload to get URLs
-        // For now, use placeholder URLs
-        let imageUrls = vehicleImages.map { _ in "placeholder_url" }
-        let mainImageUrl = vehicleImages.first(where: { $0.isMain })?.image != nil ? "main_placeholder_url" : ""
+        // Use uploaded image URLs
+        let mainImageUrl = uploadedImageUrls.first ?? ""
+        let productImageUrls = Array(uploadedImageUrls.dropFirst())
+
+        // Remove commas from numeric fields for API submission
+        let cleanPrice = price.replacingOccurrences(of: ",", with: "")
+        let cleanMileage = mileage.replacingOccurrences(of: ",", with: "")
 
         let request = VehicleRegistrationRequest(
             generation: generation,
-            mileage: mileage,
+            mileage: cleanMileage,
             vehicleType: vehicleType,
             vehicleModel: vehicleModel,
-            price: price,
+            price: cleanPrice,
             location: location,
             plateHash: plateHash,
             title: title,
             description: description,
-            productImageUrl: imageUrls,
+            productImageUrl: productImageUrls,
             option: vehicleOptions,
             mainProductImageUrl: mainImageUrl
         )
@@ -275,7 +305,7 @@ struct VehicleRegistrationView: View {
     }
 
     private func submitToAPI(request: VehicleRegistrationRequest) {
-        guard let url = URL(string: "https://3.34.181.216:8443/api/product") else {
+        guard let url = URL(string: Endpoint.registerProduct.url) else {
             print("Invalid URL")
             isSubmitting = false
             return
@@ -326,6 +356,37 @@ struct VehicleRegistrationView: View {
             alertMessage = "데이터 처리 중 오류가 발생했습니다."
             showingErrorAlert = true
             isSubmitting = false
+        }
+    }
+
+    private func loadProductInfo() async {
+        isLoadingProductInfo = true
+
+        do {
+            let productInfo = try await ProductAPI.fetchProductInfo()
+            await MainActor.run {
+                availableTypes = productInfo.type
+                availableModels = productInfo.model
+                availableOptions = productInfo.option
+                // API에서 받아온 옵션들을 VehicleOption으로 변환
+                vehicleOptions = productInfo.option.map { optionName in
+                    VehicleOption(optionName: optionName, isInclude: false)
+                }
+                isLoadingProductInfo = false
+            }
+        } catch {
+            await MainActor.run {
+                print("Failed to load product info: \(error)")
+                // 실패시 기본값 사용
+                availableTypes = ["모터홈", "픽업트럭", "SUV"]
+                availableModels = ["현대 포레스트", "기아 쏘렌토", "Toyota Hilux"]
+                availableOptions = ["샤워실", "화장실", "침대", "주방", "에어컨"]
+                // 기본 옵션들을 VehicleOption으로 변환
+                vehicleOptions = availableOptions.map { optionName in
+                    VehicleOption(optionName: optionName, isInclude: false)
+                }
+                isLoadingProductInfo = false
+            }
         }
     }
 }
