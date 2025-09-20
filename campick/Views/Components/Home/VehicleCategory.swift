@@ -24,8 +24,8 @@ struct VehicleCategory: View {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 16) {
                 VehicleCategoryItem(image: "motorhome", title: "모터홈")
                 VehicleCategoryItem(image: "trailer", title: "트레일러")
-                VehicleCategoryItem(image: "pickup", title: "픽업캠퍼")
-                VehicleCategoryItem(image: "van", title: "캠핑밴")
+                VehicleCategoryItem(image: "category", title: "픽업캠퍼")
+                VehicleCategoryItem(image: "campingVan", title: "캠핑밴")
             }
         }
     }
@@ -38,7 +38,7 @@ struct VehicleCategoryItem: View {
     
     var body: some View {
         VStack {
-            Image(.category)
+            Image(image)
                 .resizable()
                 .scaledToFill()
                 .frame(width: 70,height: 70)

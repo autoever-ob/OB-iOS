@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-enum VehicleStatus: String, CaseIterable {
+enum VehicleStatus: String, CaseIterable, Decodable {
     case active = "active"
     case reserved = "reserved"
     case sold = "sold"
@@ -28,7 +28,7 @@ enum VehicleStatus: String, CaseIterable {
         }
     }
 }
-struct Vehicle: Identifiable {
+struct Vehicle: Identifiable,Decodable {
     let id: String
     // Images
     let imageName: String?
@@ -47,4 +47,5 @@ struct Vehicle: Identifiable {
     // Flags
     let isOnSale: Bool
     let isFavorite: Bool
+    var likeCount: Int? = nil
 }

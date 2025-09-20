@@ -46,9 +46,6 @@ struct FavoritesView: View {
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
-        .safeAreaInset(edge: .bottom) {
-            BottomTabBarView(currentSelection: .favorites)
-        }
     }
 }
 

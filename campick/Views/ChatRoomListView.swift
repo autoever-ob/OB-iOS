@@ -68,8 +68,12 @@ struct ChatRoomListView: View {
     ]
     @State private var showFindVehicle = false
     @StateObject private var viewModel = ChatListViewModel()
+    @Environment(\.dismiss) private var dismiss
     var body: some View {
         VStack(alignment: .center) {
+            TopBarView(title: "매물 찾기") {
+                dismiss()
+            }
             if viewModel.chats.isEmpty {
                 VStack {
                     Circle()
@@ -151,6 +155,7 @@ struct ChatRoomListView: View {
             }
         }
         .background(AppColors.brandBackground)
+        .navigationBarHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear{
             viewModel.loadChats()
