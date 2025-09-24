@@ -3,6 +3,10 @@ import Foundation
 /// 비밀번호 찾기 화면과 비즈니스 로직을 연결하는 뷰모델
 @MainActor
 final class FindPasswordViewModel: ObservableObject {
+    private let sendPasswordResetLinkUseCase: SendPasswordResetLinkUseCase
+    private let verifyPasswordResetCodeUseCase: VerifyPasswordResetCodeUseCase
+    private let changePasswordUseCase: ChangePasswordUseCase
+
     private let testEmail = "frontTest@email.com"
     @Published var email: String = ""
     @Published var verificationCode: String = ""
@@ -22,6 +26,16 @@ final class FindPasswordViewModel: ObservableObject {
 
     enum Step { case verify, newPassword }
     @Published var step: Step = .verify
+
+    init(
+        sendPasswordResetLinkUseCase: SendPasswordResetLinkUseCase = AuthDependencyContainer.shared.sendPasswordResetLinkUseCase(),
+        verifyPasswordResetCodeUseCase: VerifyPasswordResetCodeUseCase = AuthDependencyContainer.shared.verifyPasswordResetCodeUseCase(),
+        changePasswordUseCase: ChangePasswordUseCase = AuthDependencyContainer.shared.changePasswordUseCase()
+    ) {
+        self.sendPasswordResetLinkUseCase = sendPasswordResetLinkUseCase
+        self.verifyPasswordResetCodeUseCase = verifyPasswordResetCodeUseCase
+        self.changePasswordUseCase = changePasswordUseCase
+    }
 
     var canSendCode: Bool {
         emailIsValid
@@ -55,7 +69,7 @@ final class FindPasswordViewModel: ObservableObject {
         }
 
         do {
-            try await AuthAPI.sendPasswordResetLink(email: email)
+            try await sendPasswordResetLinkUseCase.execute(email: email)
             infoMessage = "인증번호(재설정 코드)를 발송했습니다. 메일함을 확인하세요."
             codeSent = true
         } catch {
@@ -87,7 +101,7 @@ final class FindPasswordViewModel: ObservableObject {
         }
 
         do {
-            try await AuthAPI.passwordResetVerify(code: verificationCode)
+            try await verifyPasswordResetCodeUseCase.execute(code: verificationCode)
         } catch {
             showCodeMismatchAlert = true
             isIssuingPassword = false
@@ -122,7 +136,7 @@ final class FindPasswordViewModel: ObservableObject {
         }
 
         do {
-            _ = try await AuthAPI.passwordResetChange(email: email, password: newPassword)
+            try await changePasswordUseCase.execute(email: email, newPassword: newPassword)
             showResetSuccessModal = true
         } catch {
             errorMessage = map(error)

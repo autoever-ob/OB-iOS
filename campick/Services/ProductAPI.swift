@@ -25,6 +25,21 @@ enum ProductAPI {
         }
     }
 
+    static func fetchRecommendedVehicles() async throws -> VehicleResponse {
+        do {
+            let request = APIService.shared
+                .request(Endpoint.carRecommend.url, method: .get)
+                .validate()
+            let wrapped = try await request.serializingDecodable(ApiResponse<VehicleResponse>.self).value
+            if let data = wrapped.data {
+                return data
+            }
+            throw NSError(domain: "VehicleRecommendError", code: -1, userInfo: [NSLocalizedDescriptionKey: wrapped.message ?? "추천 차량을 불러오지 못했습니다."])
+        } catch {
+            throw ErrorMapper.map(error)
+        }
+    }
+
     static func fetchProducts(
         page: Int? = nil,
         size: Int? = nil,

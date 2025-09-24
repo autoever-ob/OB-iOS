@@ -11,6 +11,7 @@ import UIKit
 
 @MainActor
 final class FindVehicleViewModel: ObservableObject {
+    private let fetchVehicleListUseCase: FetchVehicleListUseCase
     // Search / UI state
     @Published var query: String = ""
     @Published var showingFilter: Bool = false
@@ -39,6 +40,10 @@ final class FindVehicleViewModel: ObservableObject {
         fetchVehicles()
     }
 
+    init(fetchVehicleListUseCase: FetchVehicleListUseCase = VehicleDependencyContainer.shared.fetchVehicleListUseCase()) {
+        self.fetchVehicleListUseCase = fetchVehicleListUseCase
+    }
+
     func fetchVehicles() {
         Task {
             isLoading = true
@@ -47,19 +52,21 @@ final class FindVehicleViewModel: ObservableObject {
                 let selectedTypes = vmSafeTypes()
                 let validTypes = Array(selectedTypes.intersection(allowedTypes))
 
-                let filter = ProductFilterRequest(
+                let query = VehicleSearchQueryDomainModel(
+                    page: 0,
+                    size: 30,
                     mileageFrom: Int(filterOptions.mileageRange.lowerBound),
                     mileageTo: Int(filterOptions.mileageRange.upperBound),
                     costFrom: Int(filterOptions.priceRange.lowerBound) * 10_000,
                     costTo: Int(filterOptions.priceRange.upperBound) * 10_000,
                     generationFrom: Int(filterOptions.yearRange.lowerBound),
                     generationTo: Int(filterOptions.yearRange.upperBound),
-                    types: validTypes.isEmpty ? nil : validTypes.map { $0.apiValue }
+                    types: validTypes.isEmpty ? nil : validTypes.map { $0.apiValue },
+                    sort: mapSort(selectedSort)
                 )
 
-                let sort = mapSort(selectedSort)
-                let page = try await ProductAPI.fetchProducts(page: 0, size: 30, filter: filter, sort: sort)
-                let mapped = page.content.map(mapToVehicle)
+                let page = try await fetchVehicleListUseCase.execute(query: query)
+                let mapped = page.items.map(mapToVehicle)
                 vehicles = mapped
 
                 // Preload vehicle images
@@ -76,7 +83,7 @@ final class FindVehicleViewModel: ObservableObject {
         return filterOptions.selectedVehicleTypes
     }
 
-    private func mapSort(_ option: SortOption) -> ProductSort? {
+    private func mapSort(_ option: SortOption) -> VehicleSortOptionDomain {
         switch option {
         case .recentlyAdded: return .createdAtDesc
         case .lowPrice: return .costAsc
@@ -87,136 +94,51 @@ final class FindVehicleViewModel: ObservableObject {
     }
 
     // MARK: - DTO -> View Model mapping
-    private func mapToVehicle(_ dto: ProductItemDTO) -> Vehicle {
-        let id = String(dto.productId)
-        let thumb = urlFrom(dto.thumbNail)
-        let status: VehicleStatus
-        switch dto.status.uppercased() {
-        case "AVAILABLE": status = .active
-        case "RESERVED": status = .reserved
-        case "SOLD", "SOLD_OUT": status = .sold
-        default: status = .active
-        }
-        let locationText = dto.location.isEmpty ? "-" : dto.location
-        let extractedYear: String = {
-            if let generation = dto.generation, generation > 0 {
-                return "\(generation)년"
-            }
-            let pattern = "(20[0-4][0-9]|19[0-9]{2})"
-            if let range = dto.title.range(of: pattern, options: .regularExpression) {
-                return String(dto.title[range]) + "년"
+    private func mapToVehicle(_ domain: VehicleSummaryDomainModel) -> Vehicle {
+        let priceText: String = {
+            guard let price = domain.price else { return "가격 정보 없음" }
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .decimal
+            return (formatter.string(from: NSNumber(value: price)) ?? String(price)) + "만원"
+        }()
+
+        let yearText: String = {
+            if let year = domain.year, year > 0 {
+                return "\(year)년"
             }
             return "-"
         }()
-        let formattedMileage = formatMileage(dto.mileage)
+
+        let mileageText = formatMileage(domain.mileage ?? 0)
         return Vehicle(
-            id: id,
+            id: domain.id,
             imageName: nil,
-            thumbnailURL: thumb,
-            title: dto.title,
-            price: dto.price,
-            year: extractedYear,
-            mileage: formattedMileage,
-            fuelType: dto.fuelType,
-            transmission: dto.transmission,
-            location: locationText,
-            status: status,
-            postedDate: dto.createdAt,
-            isOnSale: status == .active,
-            isFavorite: dto.isLiked
+            thumbnailURL: domain.thumbnailURL,
+            title: domain.title,
+            price: priceText,
+            year: yearText,
+            mileage: mileageText,
+            fuelType: domain.vehicleType ?? "-",
+            transmission: "-",
+            location: domain.location.isEmpty ? "-" : domain.location,
+            status: mapStatus(domain.status),
+            postedDate: nil,
+            isOnSale: domain.status == .active,
+            isFavorite: domain.isLiked,
+            likeCount: domain.likeCount
         )
     }
 
-    // Build URL from string, preferring original; fall back to percent-decoded
-    private func urlFrom(_ s: String?) -> URL? {
-        guard let s = s, !s.isEmpty else { return nil }
-
-        // Filter out invalid placeholder strings
-        let invalidStrings = ["string", "null", "undefined", "none", ""]
-        if invalidStrings.contains(s.lowercased()) {
-            return nil
-        }
-
-        // Must start with http or https
-        guard s.lowercased().hasPrefix("http://") || s.lowercased().hasPrefix("https://") else {
-            return nil
-        }
-
-        // Firebase download URLs expect encoded path (%2F). Use original first.
-        if let u = URL(string: s) { return u }
-        if let decoded = s.removingPercentEncoding, let u = URL(string: decoded) { return u }
-        return nil
-    }
-
-    // MARK: - Parsing helpers
-    private func digits(from s: String) -> Int {
-        let n = s.filter { $0.isNumber }
-        return Int(n) ?? 0
-    }
-    private func priceValue(_ s: String) -> Int { digits(from: s) }
-    private func mileageValue(_ s: String) -> Int {
-        let normalized = s.replacingOccurrences(of: " ", with: "")
-            .replacingOccurrences(of: ",", with: "")
-            .lowercased()
-
-        if normalized.contains("만") {
-            let numericString = normalized
-                .replacingOccurrences(of: "만km", with: "")
-                .replacingOccurrences(of: "만", with: "")
-                .replacingOccurrences(of: "km", with: "")
-                .filter { $0.isNumber || $0 == "." }
-            if let value = Double(numericString) {
-                return Int(value * 10000)
-            }
-        }
-
-        let numericString = normalized.replacingOccurrences(of: "km", with: "").filter { $0.isNumber }
-        return Int(numericString) ?? 0
-    }
-    private func yearValue(_ s: String) -> Int { digits(from: s) }
-
-    private func formatMileage(_ raw: String) -> String {
-        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return "-" }
-
-        let normalized = trimmed.replacingOccurrences(of: ",", with: "")
-            .replacingOccurrences(of: " ", with: "")
-            .replacingOccurrences(of: "KM", with: "km")
-
-        if normalized.lowercased().contains("만") {
-            let numericString = normalized
-                .lowercased()
-                .replacingOccurrences(of: "만km", with: "")
-                .replacingOccurrences(of: "만", with: "")
-                .replacingOccurrences(of: "km", with: "")
-                .filter { $0.isNumber || $0 == "." }
-            if let value = Double(numericString) {
-                return "\(formatManValue(value))만km"
-            }
-            return normalized.hasSuffix("km") ? normalized : normalized + "km"
-        }
-
-        let sanitized = normalized.replacingOccurrences(of: "km", with: "")
-        let numericString = sanitized.filter { $0.isNumber || $0 == "." }
-
-        guard let rawValue = Double(numericString) else {
-            return trimmed
-        }
-
-        if sanitized.contains(".") && rawValue < 1000 {
-            return "\(formatManValue(rawValue))만km"
-        }
-
-        if rawValue >= 10000 {
-            let manValue = rawValue / 10000.0
+    private func formatMileage(_ value: Int) -> String {
+        guard value > 0 else { return "-" }
+        if value >= 10000 {
+            let manValue = Double(value) / 10000.0
             return "\(formatManValue(manValue))만km"
         }
-
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
-        formatter.maximumFractionDigits = 0
         formatter.locale = Locale(identifier: "ko_KR")
-        let formatted = formatter.string(from: NSNumber(value: rawValue)) ?? String(Int(rawValue))
+        let formatted = formatter.string(from: NSNumber(value: value)) ?? String(value)
         return "\(formatted)km"
     }
 
@@ -270,5 +192,15 @@ final class FindVehicleViewModel: ObservableObject {
         }
 
         isPreloadingImages = false
+    }
+}
+
+extension FindVehicleViewModel {
+    fileprivate func mapStatus(_ status: VehicleStatusDomain) -> VehicleStatus {
+        switch status {
+        case .active: return .active
+        case .reserved: return .reserved
+        case .sold: return .sold
+        }
     }
 }

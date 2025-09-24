@@ -14,6 +14,7 @@ final class ProfileScreenViewModel: ObservableObject {
     // Inputs
     private let initialMemberId: String?
     let isOwnProfile: Bool
+    private let logoutUseCase: LogoutUseCase
 
     // UI State
     @Published var showEditModal = false
@@ -37,9 +38,14 @@ final class ProfileScreenViewModel: ObservableObject {
     private let dataVM = ProfileDataViewModel()
     private var cancellables = Set<AnyCancellable>()
 
-    init(memberId: String?, isOwnProfile: Bool) {
+    init(
+        memberId: String?,
+        isOwnProfile: Bool,
+        logoutUseCase: LogoutUseCase = AuthDependencyContainer.shared.logoutUseCase()
+    ) {
         self.initialMemberId = memberId
         self.isOwnProfile = isOwnProfile
+        self.logoutUseCase = logoutUseCase
 
         bind()
     }
@@ -123,14 +129,11 @@ final class ProfileScreenViewModel: ObservableObject {
 
     func logout() async {
         do {
-            AppLog.info("Requesting logout", category: "AUTH")
-            try await AuthService.shared.logout()
-            AppLog.info("Logout success", category: "AUTH")
+            try await logoutUseCase.execute()
         } catch {
-            let appError = ErrorMapper.map(error)
-            AppLog.error("Logout failed: \(appError.message)", category: "AUTH")
+            let mapped = ErrorMapper.map(error)
+            AppLog.error("Logout failed: \(mapped.message)", category: "AUTH")
         }
-        await MainActor.run { UserState.shared.logout() }
     }
 
     private func preloadProductImages(_ products: [ProfileProduct]) async {
@@ -205,4 +208,3 @@ final class ProfileScreenViewModel: ObservableObject {
         await MainActor.run { UserState.shared.logout() }
     }
 }
-

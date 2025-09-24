@@ -9,6 +9,11 @@ import SwiftUI
 
 @MainActor
 final class SignupFlowViewModel: ObservableObject {
+    private let signupUseCase: SignupUseCase
+    private let sendEmailVerificationUseCase: SendEmailVerificationUseCase
+    private let confirmEmailVerificationUseCase: ConfirmEmailVerificationUseCase
+    private let loginUseCase: LoginUseCase
+
     enum Step: Int { case email = 0, password, phone, nickname, complete }
 
     // Navigation / progress
@@ -131,6 +136,18 @@ final class SignupFlowViewModel: ObservableObject {
     @Published var submitError: String? = nil
     @Published var showServerAlert: Bool = false
 
+    init(
+        signupUseCase: SignupUseCase = AuthDependencyContainer.shared.signupUseCase(),
+        sendEmailVerificationUseCase: SendEmailVerificationUseCase = AuthDependencyContainer.shared.sendEmailVerificationUseCase(),
+        confirmEmailVerificationUseCase: ConfirmEmailVerificationUseCase = AuthDependencyContainer.shared.confirmEmailVerificationUseCase(),
+        loginUseCase: LoginUseCase = AuthDependencyContainer.shared.loginUseCase()
+    ) {
+        self.signupUseCase = signupUseCase
+        self.sendEmailVerificationUseCase = sendEmailVerificationUseCase
+        self.confirmEmailVerificationUseCase = confirmEmailVerificationUseCase
+        self.loginUseCase = loginUseCase
+    }
+
     func nicknameNext() {
         guard nicknameValid else { return }
         Task { await submitSignup() }
@@ -163,18 +180,17 @@ final class SignupFlowViewModel: ObservableObject {
             let roleValue = (userType == .dealer) ? "DEALER" : "USER"
             let dealershipName = (userType == .dealer) ? "캠픽딜러" : ""
             let dealershipRegNo = (userType == .dealer) ? dealerNumber : ""
-            if let _ = try await AuthAPI.signupAllowingEmpty(
+            let payload = SignupPayload(
                 email: email,
                 password: password,
-                checkedPassword: confirm,
+                confirmPassword: confirm,
                 nickname: nickname,
                 mobileNumber: phoneDashed(),
                 role: roleValue,
                 dealershipName: dealershipName,
                 dealershipRegistrationNumber: dealershipRegNo
-            ) {
-                // 회원가입 성공. 자동 로그인은 수행하지 않습니다.
-            }
+            )
+            _ = try await signupUseCase.execute(payload)
             await MainActor.run { go(to: .complete) }
         } catch {
             await MainActor.run {
@@ -202,7 +218,7 @@ final class SignupFlowViewModel: ObservableObject {
             emailVerified = false
         }
         do {
-            try await AuthAPI.sendEmailCode(email: email)
+            try await sendEmailVerificationUseCase.execute(email: email)
             await MainActor.run {
                 self.showEmailCodeField = true
                 self.showEmailMismatchModal = false
@@ -234,7 +250,7 @@ final class SignupFlowViewModel: ObservableObject {
     private func confirmEmail() async {
         guard !emailCode.isEmpty else { return }
         do {
-            try await AuthAPI.confirmEmailCode(code: emailCode)
+            try await confirmEmailVerificationUseCase.execute(code: emailCode)
             await MainActor.run {
                 self.emailVerified = true
                 self.showEmailMismatchModal = false
@@ -267,12 +283,8 @@ final class SignupFlowViewModel: ObservableObject {
     // 회원가입 완료 화면에서 자동 로그인 처리 후, ContentView가 UserState를 보고 홈 화면으로 전환됩니다.
     func autoLoginAfterSignup() async {
         do {
-            let res = try await AuthAPI.login(email: email, password: password)
-            TokenManager.shared.saveAccessToken(res.accessToken)
-            await MainActor.run {
-                UserState.shared.applyUserDTO(res.user)
-                self.shouldNavigateHome = true
-            }
+            try await loginUseCase.execute(email: email, password: password, keepLoggedIn: true)
+            await MainActor.run { self.shouldNavigateHome = true }
         } catch {
             await MainActor.run {
                 if let app = error as? AppError {

@@ -9,6 +9,7 @@ import SwiftUI
 import Combine
 
 class ProfileViewViewModel: ObservableObject {
+    private let logoutUseCase: LogoutUseCase
     @Published var userProfile: UserProfile
     @Published var activeListings: [Vehicle] = []
     @Published var soldListings: [Vehicle] = []
@@ -41,9 +42,10 @@ class ProfileViewViewModel: ObservableObject {
         var phone: String = ""
     }
 
-    init(userId: String, isOwnProfile: Bool) {
+    init(userId: String, isOwnProfile: Bool, logoutUseCase: LogoutUseCase = AuthDependencyContainer.shared.logoutUseCase()) {
         self.userId = userId
         self.isOwnProfile = isOwnProfile
+        self.logoutUseCase = logoutUseCase
 
         if isOwnProfile {
             let userState = UserState.shared
@@ -175,11 +177,11 @@ class ProfileViewViewModel: ObservableObject {
     func logout() {
         Task {
             do {
-                try await AuthAPI.logout()
+                try await logoutUseCase.execute()
             } catch {
-                // 서버 실패 시에도 로컬 세션은 종료
+                let mapped = ErrorMapper.map(error)
+                AppLog.error("Logout failed: \(mapped.message)", category: "AUTH")
             }
-            await MainActor.run { UserState.shared.logout() }
         }
     }
 

@@ -133,6 +133,9 @@ struct EmailVerificationStep: View {
     @Binding var showAlert: Bool
     @Binding var alertMessage: String
 
+    private let sendPasswordResetLinkUseCase = AuthDependencyContainer.shared.sendPasswordResetLinkUseCase()
+    private let verifyPasswordResetCodeUseCase = AuthDependencyContainer.shared.verifyPasswordResetCodeUseCase()
+
     var body: some View {
         VStack(spacing: 24) {
             VStack(spacing: 20) {
@@ -250,7 +253,7 @@ struct EmailVerificationStep: View {
 
         Task {
             do {
-                try await AuthAPI.sendPasswordResetLink(email: email)
+                try await sendPasswordResetLinkUseCase.execute(email: email)
                 // 이미 성공 알림 표시됨
             } catch {
                 isVerificationSent = false // 실패 시 다시 숨김
@@ -265,7 +268,7 @@ struct EmailVerificationStep: View {
 
         Task {
             do {
-                try await AuthAPI.passwordResetVerify(code: verificationCode)
+                try await verifyPasswordResetCodeUseCase.execute(code: verificationCode)
                 isEmailVerified = true
                 alertMessage = "이메일 인증이 완료되었습니다."
                 showAlert = true
@@ -286,6 +289,8 @@ struct PasswordSetupStep: View {
     @Binding var showAlert: Bool
     @Binding var alertMessage: String
     @Binding var showConfirmationModal: Bool
+
+    private let changePasswordUseCase = AuthDependencyContainer.shared.changePasswordUseCase()
 
     // 비밀번호 유효성 검사
     private var isPasswordValid: Bool {
@@ -432,7 +437,7 @@ struct PasswordSetupStep: View {
         // API 호출
         Task {
             do {
-                _ = try await AuthAPI.passwordResetChange(email: email, password: newPassword)
+                try await changePasswordUseCase.execute(email: email, newPassword: newPassword)
                 await MainActor.run {
                     isLoading = false
                     alertMessage = "비밀번호가 성공적으로 변경되었습니다."

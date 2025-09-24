@@ -4,10 +4,21 @@ import UIKit
 
 @MainActor
 final class FavoritesViewModel: ObservableObject {
+    private let fetchFavoriteVehiclesUseCase: FetchFavoriteVehiclesUseCase
+    private let toggleLikeUseCase: ToggleVehicleLikeUseCase
+
     @Published var favorites: [Vehicle] = []
     @Published var isLoading = false
     @Published var isPreloadingImages = false
     @Published var errorMessage: String? = nil
+
+    init(
+        fetchFavoriteVehiclesUseCase: FetchFavoriteVehiclesUseCase = VehicleDependencyContainer.shared.fetchFavoriteVehiclesUseCase(),
+        toggleLikeUseCase: ToggleVehicleLikeUseCase = VehicleDependencyContainer.shared.toggleLikeUseCase()
+    ) {
+        self.fetchFavoriteVehiclesUseCase = fetchFavoriteVehiclesUseCase
+        self.toggleLikeUseCase = toggleLikeUseCase
+    }
 
     func load() {
         isLoading = true
@@ -21,8 +32,8 @@ final class FavoritesViewModel: ObservableObject {
                     favorites = []
                     return
                 }
-                let page = try await ProductAPI.fetchFavorites(memberId: memberId, page: 0, size: 20)
-                let mapped = page.content.map(mapToVehicle)
+                let page = try await fetchFavoriteVehiclesUseCase.execute(memberId: memberId, page: 0, size: 20)
+                let mapped = page.items.map(mapToVehicle)
                 favorites = mapped
 
                 await preloadVehicleImages(mapped)
@@ -34,41 +45,36 @@ final class FavoritesViewModel: ObservableObject {
         }
     }
 
-    private func mapToVehicle(_ item: MyProductListItem) -> Vehicle {
-        let priceText = formatPrice(item.cost)
-        let yearText = item.generation > 0 ? "\(item.generation)년" : "-"
-        let mileageText = formatMileage(String(item.mileage))
+    private func mapToVehicle(_ item: VehicleSummaryDomainModel) -> Vehicle {
+        let priceText = formatPrice(item.price ?? 0)
+        let yearText = item.year.map { "\($0)년" } ?? "-"
+        let mileageText = formatMileage(item.mileage ?? 0)
         let status = mapStatus(item.status)
-        let thumbnailURL = urlFrom(item.thumbnailUrls.first)
+        let thumbnailURL = item.thumbnailURL
 
         return Vehicle(
-            id: String(item.productId),
+            id: item.id,
             imageName: nil,
             thumbnailURL: thumbnailURL,
             title: item.title,
             price: priceText,
             year: yearText,
             mileage: mileageText,
-            fuelType: item.fuelType ?? "-",
-            transmission: item.transmission ?? "-",
+            fuelType: item.vehicleType ?? "-",
+            transmission: "-",
             location: item.location,
             status: status,
-            postedDate: item.createdAt,
+            postedDate: nil,
             isOnSale: status == .active,
             isFavorite: true
         )
     }
 
-    private func mapStatus(_ raw: String) -> VehicleStatus {
-        switch raw.uppercased() {
-        case "AVAILABLE", "ACTIVE":
-            return .active
-        case "RESERVED":
-            return .reserved
-        case "SOLD", "COMPLETED":
-            return .sold
-        default:
-            return .active
+    private func mapStatus(_ status: VehicleStatusDomain) -> VehicleStatus {
+        switch status {
+        case .active: return .active
+        case .reserved: return .reserved
+        case .sold: return .sold
         }
     }
 
@@ -81,52 +87,18 @@ final class FavoritesViewModel: ObservableObject {
         return formatted
     }
 
-    private func formatMileage(_ s: String) -> String {
-        let normalized = s.replacingOccurrences(of: " ", with: "")
-            .replacingOccurrences(of: ",", with: "")
-            .lowercased()
-
-        if normalized.contains("만") {
-            let numericString = normalized
-                .replacingOccurrences(of: "만km", with: "")
-                .replacingOccurrences(of: "만", with: "")
-                .replacingOccurrences(of: "km", with: "")
-                .filter { $0.isNumber || $0 == "." }
-            if let value = Double(numericString) {
-                return "\(formatManValue(value))만km"
-            }
-            return normalized.hasSuffix("km") ? normalized : normalized + "km"
-        }
-
-        let sanitized = normalized.replacingOccurrences(of: "km", with: "")
-        let numericString = sanitized.filter { $0.isNumber || $0 == "." }
-
-        guard let rawValue = Double(numericString) else {
-            return s
-        }
-
-        if sanitized.contains(".") && rawValue < 1000 {
-            return "\(formatManValue(rawValue))만km"
-        }
-
-        if rawValue >= 10000 {
-            let manValue = rawValue / 10000.0
+    private func formatMileage(_ value: Int) -> String {
+        guard value > 0 else { return "-" }
+        if value >= 10000 {
+            let manValue = Double(value) / 10000.0
             return "\(formatManValue(manValue))만km"
         }
-
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 0
         formatter.locale = Locale(identifier: "ko_KR")
-        let formatted = formatter.string(from: NSNumber(value: rawValue)) ?? String(Int(rawValue))
+        let formatted = formatter.string(from: NSNumber(value: value)) ?? String(value)
         return "\(formatted)km"
-    }
-
-    fileprivate func urlFrom(_ s: String?) -> URL? {
-        guard let s = s, !s.isEmpty else { return nil }
-        if let u = URL(string: s) { return u }
-        if let decoded = s.removingPercentEncoding, let u = URL(string: decoded) { return u }
-        return nil
     }
 
     private func formatManValue(_ value: Double) -> String {

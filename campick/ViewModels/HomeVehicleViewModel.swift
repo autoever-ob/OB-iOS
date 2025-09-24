@@ -10,98 +10,123 @@ import UIKit
 
 
 final class HomeVehicleViewModel: ObservableObject {
-    @Published var vehicles: [RecommendedVehicle] = []
+    private let fetchRecommendationsUseCase: FetchVehicleRecommendationsUseCase
+    private let toggleLikeUseCase: ToggleVehicleLikeUseCase
+
+    struct VehicleCardData: Identifiable {
+        let id: String
+        let productId: String
+        let title: String
+        let thumbnailURLString: String
+        let generationText: String
+        let mileageText: String
+        let priceText: String
+        var isLiked: Bool
+        var likeCount: Int
+        let badge: String?
+    }
+
+    @Published var vehicles: [VehicleCardData] = []
     @Published var isLoading: Bool = false
     @Published var isPreloadingImages: Bool = false
     @Published var errorMessage: String?
-    @Published private var likingIds: Set<Int> = []
+    @Published private var likingIds: Set<String> = []
+
+    init(
+        fetchRecommendationsUseCase: FetchVehicleRecommendationsUseCase = VehicleDependencyContainer.shared.fetchRecommendationsUseCase(),
+        toggleLikeUseCase: ToggleVehicleLikeUseCase = VehicleDependencyContainer.shared.toggleLikeUseCase()
+    ) {
+        self.fetchRecommendationsUseCase = fetchRecommendationsUseCase
+        self.toggleLikeUseCase = toggleLikeUseCase
+    }
 
     func loadRecommendVehicles() {
         isLoading = true
-        VehicleService.shared.getRecommendVehicles { [weak self] result in
-            DispatchQueue.main.async {
-                self?.isLoading = false
-                switch result {
-                case .success(let data):
-                    self?.vehicles = data
-                    // Preload vehicle images
-                    Task {
-                        await self?.preloadVehicleImages(data)
-                    }
-                case .failure(let error):
-                    self?.errorMessage = error.localizedDescription
+        Task {
+            defer { isLoading = false }
+            do {
+                let recommendations = try await fetchRecommendationsUseCase.execute()
+                let viewData = recommendations.enumerated().map { index, model in
+                    VehicleCardData(
+                        id: model.id,
+                        productId: model.productId,
+                        title: model.title,
+                        thumbnailURLString: model.thumbnailURL?.absoluteString ?? "",
+                        generationText: formatGeneration(from: model.generation),
+                        mileageText: formatMileage(from: model.mileage),
+                        priceText: formatPrice(from: model.price),
+                        isLiked: model.isLiked,
+                        likeCount: model.likeCount,
+                        badge: model.highlightTag
+                    )
                 }
+                vehicles = viewData
+                await preloadVehicleImages(viewData)
+            } catch {
+                errorMessage = ErrorMapper.map(error).localizedDescription
             }
         }
     }
-    
-    func toggleLike(productId: Int) {
-            guard let idx = vehicles.firstIndex(where: { $0.productId == productId }) else { return }
-            // 중복 요청 방지
-            guard !likingIds.contains(productId) else { return }
-            likingIds.insert(productId)
 
-            // 이전 값 저장
-            let oldLiked = vehicles[idx].isLiked
-            let oldCount = vehicles[idx].likeCount ?? 0
+    func toggleLike(productId: String) {
+        guard let idx = vehicles.firstIndex(where: { $0.productId == productId }) else { return }
+        guard !likingIds.contains(productId) else { return }
+        likingIds.insert(productId)
 
-            // 👇 낙관적 업데이트 (UI 즉시 반영)
-            let newLiked = !oldLiked
-            let newCount = max(0, oldCount + (newLiked ? 1 : -1))
-            vehicles[idx].isLiked = newLiked
-            vehicles[idx].likeCount = newCount
+        var current = vehicles[idx]
+        let previousLiked = current.isLiked
+        let previousLikeCount = current.likeCount
+        current.isLiked.toggle()
+        current.likeCount = max(0, previousLikeCount + (current.isLiked ? 1 : -1))
+        vehicles[idx] = current
 
-            // 서버 호출
-            VehicleService.shared.likeVehicle(productId: String(productId)) { [weak self] result in
-                DispatchQueue.main.async {
-                    guard let self = self else { return }
-                    self.likingIds.remove(productId)
-
-                    switch result {
-                    case .success:
-                        // 성공이면 그대로 유지
-                        break
-                    case .failure:
-                        // 실패면 되돌리기
-                        if let curIdx = self.vehicles.firstIndex(where: { $0.productId == productId }) {
-                            self.vehicles[curIdx].isLiked = oldLiked
-                            self.vehicles[curIdx].likeCount = oldCount
-                        }
+        Task {
+            defer { likingIds.remove(productId) }
+            do {
+                try await toggleLikeUseCase.execute(productId: productId)
+            } catch {
+                await MainActor.run {
+                    if let currentIndex = vehicles.firstIndex(where: { $0.productId == productId }) {
+                        vehicles[currentIndex].isLiked = previousLiked
+                        vehicles[currentIndex].likeCount = previousLikeCount
                     }
                 }
             }
         }
+    }
 
-        // 버튼 비활성화를 위해 조회용
-        func isLiking(_ productId: Int) -> Bool {
-            likingIds.contains(productId)
-        }
-    
-    func formatPrice(_ price: String) -> String {
-        if let value = Int(price) {
-            let formatter = NumberFormatter()
-            formatter.numberStyle = .decimal
-            let formatted = formatter.string(from: NSNumber(value: value)) ?? price
-            return "\(formatted)만원"
-        }
-        return price
+    // 버튼 비활성화를 위해 조회용
+    func isLiking(_ productId: String) -> Bool {
+        likingIds.contains(productId)
     }
-    
-    func formatMileage(_ mileage: String) -> String {
-        if let value = Int(mileage) {
-            let formatter = NumberFormatter()
-            formatter.numberStyle = .decimal
-            return "\(formatter.string(from: NSNumber(value: value)) ?? mileage)km"
-        }
-        return mileage
+
+    private func formatPrice(from value: Int?) -> String {
+        guard let value else { return "-" }
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        let formatted = formatter.string(from: NSNumber(value: value)) ?? String(value)
+        return formatted + "만원"
     }
-    
-    func formatGeneration(_ generation: Int) -> String {
-        return "\(generation)년식"
+
+    private func formatMileage(from value: Int?) -> String {
+        guard let value else { return "-" }
+        if value >= 10000 {
+            let man = Double(value) / 10000.0
+            return String(format: man.truncatingRemainder(dividingBy: 1) == 0 ? "%.0f만km" : "%.1f만km", man)
+        }
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        let formatted = formatter.string(from: NSNumber(value: value)) ?? String(value)
+        return formatted + "km"
+    }
+
+    private func formatGeneration(from value: Int?) -> String {
+        guard let value else { return "-" }
+        return "\(value)년식"
     }
 
     @MainActor
-    private func preloadVehicleImages(_ vehicles: [RecommendedVehicle]) async {
+    private func preloadVehicleImages(_ vehicles: [VehicleCardData]) async {
         guard !vehicles.isEmpty else { return }
 
         self.isPreloadingImages = true
@@ -110,8 +135,7 @@ final class HomeVehicleViewModel: ObservableObject {
         await withTaskGroup(of: Void.self) { group in
             for vehicle in vehicles {
                 group.addTask {
-                    guard let thumbnail = vehicle.thumbNail,
-                          let url = URL(string: thumbnail) else { return }
+                    guard let url = URL(string: vehicle.thumbnailURLString) else { return }
 
                     // Check if image is already cached
                     let isCached = await MainActor.run {
