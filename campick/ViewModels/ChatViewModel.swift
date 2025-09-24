@@ -18,6 +18,10 @@ final class ChatViewModel: ObservableObject {
     @Published var seller: ChatSeller?
     @Published var vehicle: ChatVehicle?
     
+    @Published var currentPage = 0
+    @Published var hasNextPage = true
+    private let pageSize = 20
+    
     @Published var uploadedImageUrl: String? = nil
     
     
@@ -51,46 +55,109 @@ final class ChatViewModel: ObservableObject {
             }
         }
     }
-    
-    func loadChatRoom(chatRoomId: Int) {
-        ChatService.shared.getChatMessages(chatRoomId: chatRoomId) { [weak self] result in
+    // MARK: 기존 채팅 조회
+//    func loadChatRoom(chatRoomId: Int) {
+//        ChatService.shared.getChatMessages(chatRoomId: chatRoomId) { [weak self] result in
+//            DispatchQueue.main.async {
+//                switch result {
+//                case .success(let response):
+//                    // 1. Seller 변환
+//                    self?.seller = ChatSeller(
+//                        id: String(response.sellerId),
+//                        name: response.sellerNickname,
+//                        avatar: response.sellerProfileImage ?? "default" ,
+//                        isOnline: response.isActive,
+//                        phoneNumber: response.sellerPhoneNumber
+//                    )
+//                    
+//                    // 2. Vehicle 변환
+//                    self?.vehicle = ChatVehicle(
+//                        id: String(response.productId),
+//                        title: response.productTitle,
+//                        price: response.productPrice,
+//                        status: response.productStatus,
+//                        image: response.productImage,
+//                    )
+//                    
+//                    // 3. 메시지 변환
+//                    self?.messages = response.chatData.map { chat in
+//                        Chat(
+//                            message: chat.message,
+//                            senderId: chat.senderId,
+//                            sendAt: chat.sendAt,
+//                            isRead: chat.isRead
+//                        )
+//                    }
+//                    
+//                case .failure(let error):
+//                    self?.errorMessage = error.localizedDescription
+//                }
+//            }
+//        }
+//    }
+    // MARK: 페이지네이션 채팅 조회
+    func loadChatRoom(chatRoomId: Int, page: Int = 0, reset: Bool = false) {
+        if reset {
+            currentPage = 0
+            hasNextPage = true
+            messages.removeAll()
+        }
+
+        guard hasNextPage else { return }
+
+        ChatService.shared.getChatMessages(chatRoomId: chatRoomId, page: currentPage, size: pageSize) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let response):
-                    // 1. Seller 변환
+                    // Seller 변환
                     self?.seller = ChatSeller(
                         id: String(response.sellerId),
                         name: response.sellerNickname,
-                        avatar: response.sellerProfileImage ?? "default" ,
+                        avatar: response.sellerProfileImage ?? "default",
                         isOnline: response.isActive,
                         phoneNumber: response.sellerPhoneNumber
                     )
-                    
-                    // 2. Vehicle 변환
+
+                    // Vehicle 변환
                     self?.vehicle = ChatVehicle(
                         id: String(response.productId),
                         title: response.productTitle,
                         price: response.productPrice,
                         status: response.productStatus,
-                        image: response.productImage,
+                        image: response.productImage
                     )
-                    
-                    // 3. 메시지 변환
-                    self?.messages = response.chatData.map { chat in
-                        Chat(
+
+                    // Message 변환
+                    let newMessages = response.chatData.map { chat -> Chat in
+                        print("📩 메시지 수신:", chat.sendAt, chat.message)
+                        return Chat(
                             message: chat.message,
                             senderId: chat.senderId,
                             sendAt: chat.sendAt,
                             isRead: chat.isRead
                         )
                     }
-                    
+
+                    if self?.currentPage == 0 {
+                        self?.messages = newMessages
+                    } else {
+                        self?.messages.insert(contentsOf: newMessages, at: 0)
+                    }
+
+                    // 페이지네이션 상태 업데이트
+                    self?.hasNextPage = !response.last
+                    self?.currentPage += 1
+
+                    print("📄 page=\(response.page), last=\(response.last)")
+
                 case .failure(let error):
                     self?.errorMessage = error.localizedDescription
                 }
             }
         }
     }
+    
+    
     func uploadChatImage(chatId: Int, image: UIImage, completion: @escaping (Result<String, AFError>) -> Void) {
         ChatService.shared.uploadChatImage(chatId: chatId, image: image) { result in
             DispatchQueue.main.async {
@@ -189,7 +256,7 @@ final class ChatViewModel: ObservableObject {
             case .online(let onlineList):
                 // 특정 chatId만 필터링
                 if let target = onlineList.first(where: { $0.chatId == chatId }) {
-                    print("📡 채팅방 \(target.chatId) 온라인 상태: \(target.isOnline)")
+//                    print("📡 채팅방 \(target.chatId) 온라인 상태: \(target.isOnline)")
                     // ChatViewModel에서 seller에 반영
                     self.seller?.isOnline = target.isOnline
                     // UI 즉시 갱신

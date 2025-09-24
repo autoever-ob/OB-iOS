@@ -44,6 +44,7 @@ struct ChatRoomView: View {
             
             MessageList(
                 viewModel: viewModel,
+                chatRoomId: chatRoomId
                 //                isTyping: $isTyping
             )
             
@@ -170,7 +171,7 @@ struct ChatRoomView: View {
                 WebSocket.shared.connect(userId: userState.memberId)
             }
             viewModel.bindWebSocket()
-            viewModel.loadChatRoom(chatRoomId: chatRoomId)
+            viewModel.loadChatRoom(chatRoomId: chatRoomId, reset: true)
             
             viewModel.observeChatRoomOnlineStatus(chatId: chatRoomId)
 

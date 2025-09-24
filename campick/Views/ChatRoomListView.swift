@@ -70,6 +70,11 @@ struct ChatRoomListView: View {
                             .listRowSeparator(.hidden)
                             .listRowBackground(Color.clear)
                             .padding(.bottom, 10)
+                            .onAppear {
+                                if room.id == viewModel.chats.last?.id {
+                                    viewModel.loadChats(reset: false)
+                                }
+                            }
                     }
                     .onDelete { indexSet in
                         for index in indexSet {
@@ -117,7 +122,7 @@ struct ChatRoomListView: View {
                 if !chatIds.isEmpty {
                     let request = IsOnlineRequest(data: ChatIdList(chatId: chatIds))
                     WebSocket.shared.send(request)
-                    print("온라인 상태 요청 전송: \(chatIds)")
+//                    print("온라인 상태 요청 전송: \(chatIds)")
                 }
             }
             

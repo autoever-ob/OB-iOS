@@ -21,20 +21,45 @@ class ChatService: ObservableObject {
         return d
     }()
     
-    func getChatList(completion: @escaping (Result<[ChatList], AFError>) -> Void) {
+    // MARK: 기존 채팅리스트
+//    func getChatList(completion: @escaping (Result<[ChatList], AFError>) -> Void) {
+//        APIService.shared
+//            .request(Endpoint.chatList.url)
+//            .validate()
+//            .responseDecodable(of: ApiResponse<ChatListResponse>.self, decoder: decoder) { response in
+//                switch response.result {
+//                case .success(let apiResponse):
+//                    if let data = apiResponse.data {
+//                        completion(.success(data.chatRoom))
+//                    } else {
+//                        completion(.success([]))
+//                    }
+//                case .failure(let error):
+//                    //                    print("채팅방 조회 실패: \(error.localizedDescription)")
+//                    completion(.failure(error))
+//                }
+//            }
+//    }
+    
+    // MARK: 페이지네이션 채팅리스트 
+    func getChatList(page: Int = 0, size: Int = 20, completion: @escaping (Result<ChatListResponse, AFError>) -> Void) {
+        let params: [String: Any] = ["page": page, "size": size]
+
         APIService.shared
-            .request(Endpoint.chatList.url)
+            .request(Endpoint.chatList.url,
+                     method: .get,
+                     parameters: params)
             .validate()
-            .responseDecodable(of: ApiResponse<ChatListResponse>.self, decoder: decoder) { response in
+            .responseDecodable(of: ApiResponse<ChatListResponse>.self) { response in
                 switch response.result {
                 case .success(let apiResponse):
                     if let data = apiResponse.data {
-                        completion(.success(data.chatRoom))
+                        print("📨 ChatList page=\(data.page), last=\(data.last), count=\(data.content.count)")
+                        completion(.success(data))
                     } else {
-                        completion(.success([]))
+                        completion(.failure(AFError.responseValidationFailed(reason: .dataFileNil)))
                     }
                 case .failure(let error):
-                    //                    print("채팅방 조회 실패: \(error.localizedDescription)")
                     completion(.failure(error))
                 }
             }
@@ -68,21 +93,78 @@ class ChatService: ObservableObject {
                 }
             }
     }
+    // MARK: 기존 채팅 호출
+//    func getChatMessages(chatRoomId: Int, completion: @escaping (Result<ChatResponse, AFError>) -> Void) {
+//        APIService.shared
+//            .request(Endpoint.chatGet(chatRoomId: String(chatRoomId)).url)
+//            .validate()
+//            .responseDecodable(of: ApiResponse<ChatResponse>.self, decoder: decoder) { response in
+//                switch response.result {
+//                case .success(let apiResponse):
+//                    if let data = apiResponse.data {
+//                        //                        print("채팅방(\(chatRoomId)) 메시지 조회 성공: \(data.chatData.count)개 메시지")
+//                        completion(.success(data))
+//                    } else {
+//                        completion(.failure(AFError.responseValidationFailed(reason: .dataFileNil)))
+//                    }
+//                case .failure(let error):
+//                    completion(.failure(error))
+//                }
+//            }
+//    }
     
-    func getChatMessages(chatRoomId: Int, completion: @escaping (Result<ChatResponse, AFError>) -> Void) {
+    // MARK: 페이지네이션 호출
+//    func getChatMessages(chatRoomId: Int, page: Int = 0, size: Int = 20, completion: @escaping (Result<ChatResponse, AFError>) -> Void) {
+//        let params: [String: Any] = ["page": page, "size": size]
+//
+//        APIService.shared
+//            .request(Endpoint.chatGet(chatRoomId: String(chatRoomId)).url,
+//                     method: .get,
+//                     parameters: params)
+//            .validate()
+//            .responseDecodable(of: ApiResponse<ChatResponse>.self, decoder: decoder) { response in
+//                switch response.result {
+//                case .success(let apiResponse):
+//                    if let data = apiResponse.data {
+//                        completion(.success(data))
+//                    } else {
+//                        completion(.failure(AFError.responseValidationFailed(reason: .dataFileNil)))
+//                    }
+//                case .failure(let error):
+//                    completion(.failure(error))
+//                }
+//            }
+//    }
+    // MARK: 페이지네이션 호출
+    func getChatMessages(
+        chatRoomId: Int,
+        page: Int = 0,
+        size: Int = 20,
+        completion: @escaping (Result<ChatResponse, AFError>) -> Void
+    ) {
+        let params: [String: Any] = ["page": page, "size": size]
+
         APIService.shared
-            .request(Endpoint.chatGet(chatRoomId: String(chatRoomId)).url)
+            .request(Endpoint.chatGet(chatRoomId: String(chatRoomId)).url,
+                     method: .get,
+                     parameters: params)
             .validate()
             .responseDecodable(of: ApiResponse<ChatResponse>.self, decoder: decoder) { response in
                 switch response.result {
                 case .success(let apiResponse):
                     if let data = apiResponse.data {
-                        //                        print("채팅방(\(chatRoomId)) 메시지 조회 성공: \(data.chatData.count)개 메시지")
+                        // 📄 페이지네이션 로그 추가
+                        print("📨 getChatMessages 성공: chatRoomId=\(chatRoomId), page=\(page), size=\(size)")
+                        print("   totalElements=\(data.totalElements), totalPages=\(data.totalPages), page=\(data.page), last=\(data.last)")
+                        print("   불러온 메시지 개수=\(data.chatData.count)")
+
                         completion(.success(data))
                     } else {
+                        print("⚠️ getChatMessages 성공 but data 없음")
                         completion(.failure(AFError.responseValidationFailed(reason: .dataFileNil)))
                     }
                 case .failure(let error):
+                    print("❌ getChatMessages 실패: chatRoomId=\(chatRoomId), page=\(page), error=\(error)")
                     completion(.failure(error))
                 }
             }

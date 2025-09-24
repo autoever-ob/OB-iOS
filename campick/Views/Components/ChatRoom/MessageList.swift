@@ -35,6 +35,8 @@ struct MessageList: View {
     @State private var scrollProxy: ScrollViewProxy?
     @State private var containerMaxY: CGFloat = .zero
     
+    let chatRoomId: Int
+    
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
@@ -46,15 +48,32 @@ struct MessageList: View {
 //                        )
 //                        .id(msg.id)
 //                    }
+                    // MARK: - 기존 채팅 리스트 렌더링
+//                    ForEach(Array(viewModel.messages.enumerated()), id: \.1.id) { index, msg in
+//                        let isLast = index == viewModel.messages.count - 1
+//                        MessageBubble(
+//                            message: msg,
+//                            isLast: isLast,
+//                            viewModel: viewModel
+//                            
+//                        )
+//                        .id(msg.id)
+//                    }
+                    
+                    // MARK: - 페이지네이션 채팅 리스트 렌더링
                     ForEach(Array(viewModel.messages.enumerated()), id: \.1.id) { index, msg in
-                        let isLast = index == viewModel.messages.count - 1
                         MessageBubble(
                             message: msg,
-                            isLast: isLast,
+                            isLast: index == viewModel.messages.count - 1,
                             viewModel: viewModel
-                            
                         )
                         .id(msg.id)
+                        .onAppear {
+                            print("👀 index=\(index), msg=\(msg.id)")
+                            if index == 0 && !viewModel.isLoading {
+                                viewModel.loadChatRoom(chatRoomId: chatRoomId, reset: false)
+                            }
+                        }
                     }
                     // 바닥 앵커
                     Color.clear
@@ -253,6 +272,7 @@ struct MessageBubble: View {
                         }
                     }
                 }
+                
                 .frame(maxWidth: 300, alignment: .leading)
                 .padding(.vertical, 4)
             }

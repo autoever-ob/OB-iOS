@@ -8,6 +8,10 @@
 import Foundation
 
 struct ChatResponse: Decodable {
+    let totalElements: Int
+    let totalPages: Int
+    let page: Int
+    let size: Int
     let sellerId: Int
     let buyerId: Int
     let sellerNickname: String
@@ -16,9 +20,10 @@ struct ChatResponse: Decodable {
     let sellerPhoneNumber: String
     let productId: Int
     let productTitle: String
+    let productImage: String?
     let productStatus: String
     let productPrice: String
-    let productImage: String
     let isActive: Bool
     let chatData: [Chat]
+    let last: Bool
 }

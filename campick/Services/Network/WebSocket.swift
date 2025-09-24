@@ -27,15 +27,15 @@ class WebSocket {
         // 연결 후 수신 시작
         sendChatInit()
         
-        print("📡 receive() 호출 직전")
+        print("receive() 호출 직전")
         receive()
-        print("📡 receive() 호출 직후")
+        print("receive() 호출 직후")
 //        startPing()
         
     }
     
     func receive() {
-        print("메시지 수신중")
+//        print("메시지 수신중")
             webSocketTask?.receive { [weak self] result in
                 switch result {
                 case .failure(let error):
@@ -43,7 +43,7 @@ class WebSocket {
                 case .success(let message):
                     switch message {
                     case .string(let text):
-                        print("받은 메시지(raw):", text)
+//                        print("받은 메시지(raw):", text)
                         if let data = text.data(using: .utf8) {
                             do {
                                 let decoded = try JSONDecoder().decode(WebSocketResponse.self, from: data)
@@ -90,24 +90,24 @@ class WebSocket {
         do {
             let jsonData = try encoder.encode(data)
             if let jsonString = String(data: jsonData, encoding: .utf8) {
-                print("📤 전송 시도:", jsonString)
+//                print("📤 전송 시도:", jsonString)
 
                 guard let webSocketTask = webSocketTask else {
-                    print("⚠️ webSocketTask is nil")
+                    print("webSocketTask is nil")
                     return
                 }
-                print("webSocketTask state:", webSocketTask.state.rawValue) // 0: running, 1: suspended, 2: canceling, 3: completed
+//                print("webSocketTask state:", webSocketTask.state.rawValue) // 0: running, 1: suspended, 2: canceling, 3: completed
 
                 webSocketTask.send(.string(jsonString)) { error in
                     if let error = error {
-                        print("전송 실패:", error)
+//                        print("전송 실패:", error)
                     } else {
-                        print("전송 성공:", jsonString)
+//                        print("전송 성공:", jsonString)
                     }
                 }
             }
         } catch {
-            print("인코딩 실패:", error)
+//            print("인코딩 실패:", error)
         }
     }
     
