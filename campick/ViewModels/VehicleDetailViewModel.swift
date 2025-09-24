@@ -2,9 +2,20 @@ import Foundation
 
 @MainActor
 final class VehicleDetailViewModel: ObservableObject {
+    private let fetchDetailUseCase: FetchVehicleDetailUseCase
+    private let updateStatusUseCase: UpdateVehicleStatusUseCase
+
     @Published private(set) var detail: VehicleDetailViewData?
     @Published private(set) var isLoading = false
     @Published var errorMessage: String?
+
+    init(
+        fetchDetailUseCase: FetchVehicleDetailUseCase = VehicleDependencyContainer.shared.fetchVehicleDetailUseCase(),
+        updateStatusUseCase: UpdateVehicleStatusUseCase = VehicleDependencyContainer.shared.updateVehicleStatusUseCase()
+    ) {
+        self.fetchDetailUseCase = fetchDetailUseCase
+        self.updateStatusUseCase = updateStatusUseCase
+    }
 
     func load(productId: String) async {
         if isLoading { return }
@@ -13,8 +24,8 @@ final class VehicleDetailViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            let dto = try await ProductAPI.fetchProductDetail(productId: productId)
-            detail = VehicleDetailViewData(dto: dto)
+            let domain = try await fetchDetailUseCase.execute(productId: productId)
+            detail = VehicleDetailViewData(domain: domain)
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -27,11 +38,7 @@ final class VehicleDetailViewModel: ObservableObject {
         current.status = newStatus
         detail = current
         do {
-            let res = try await ProductAPI.updateProductStatus(productId: productId, status: newStatus)
-            let ok = (res.success == true) || ((res.status ?? 0) >= 200 && (res.status ?? 0) < 300)
-            if !ok {
-                throw NSError(domain: "ProductStatus", code: res.status ?? -1, userInfo: [NSLocalizedDescriptionKey: res.message ?? "상태 변경에 실패했습니다."])
-            }
+            try await updateStatusUseCase.execute(productId: productId, status: newStatus.asDomain)
         } catch {
             // rollback on failure
             var rollback = detail
@@ -58,91 +65,78 @@ struct VehicleDetailViewData {
     let likeCount: Int
     var status: VehicleStatus
 
-    init(dto: ProductDetailDTO) {
+    init(domain: VehicleDetailDomainModel) {
         let formatter = DetailFormatter()
-        id = String(dto.productId ?? 0)
-        title = dto.title ?? dto.vehicleModel ?? "차량 정보"
-        priceText = formatter.price(dto.price)
-        yearText = formatter.year(dto.generation)
-        mileageText = formatter.mileage(dto.mileage)
-        typeText = dto.vehicleType ?? "-"
-        location = dto.location ?? "-"
-        images = dto.productImage ?? []
-        description = dto.description ?? "-"
-        features = formatter.options(dto.option)
-        seller = formatter.seller(from: dto.user)
-        isLiked = dto.isLiked ?? false
-        likeCount = dto.likeCount ?? 0
-        status = DetailFormatter.mapStatus(dto.status)
+        id = domain.id
+        title = domain.title.isEmpty ? domain.vehicleModel : domain.title
+        priceText = formatter.price(from: domain.price)
+        yearText = formatter.year(from: domain.generation)
+        mileageText = formatter.mileage(from: domain.mileage)
+        typeText = domain.vehicleType
+        location = domain.location
+        images = domain.images
+        description = domain.description
+        features = domain.features
+        seller = formatter.seller(from: domain.seller)
+        isLiked = domain.isLiked
+        likeCount = domain.likeCount
+        status = formatter.mapStatus(domain.status)
     }
 }
 
 private struct DetailFormatter {
-    func price(_ value: String?) -> String {
-        guard let value, !value.isEmpty else { return "가격 정보 없음" }
-        if value.range(of: #"\d"#, options: .regularExpression) != nil {
-            let digits = value.filter { $0.isNumber }
-            if let intValue = Int(digits), intValue > 0 {
-                let formatter = NumberFormatter()
-                formatter.numberStyle = .decimal
-                let formatted = formatter.string(from: NSNumber(value: intValue)) ?? digits
-                return formatted + "만원"
-            }
-        }
-        return value
+    func price(from value: Int?) -> String {
+        guard let value, value > 0 else { return "가격 정보 없음" }
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        let formatted = formatter.string(from: NSNumber(value: value)) ?? String(value)
+        return formatted + "만원"
     }
 
-    func year(_ value: String?) -> String {
-        guard let value, !value.isEmpty else { return "-" }
-        if let year = value.prefix(4).toInt() {
-            return "\(year)년"
-        }
-        return value
+    func year(from value: Int?) -> String {
+        guard let value else { return "-" }
+        return "\(value)년"
     }
 
-    func mileage(_ value: String?) -> String {
-        guard let value, !value.isEmpty else { return "-" }
-        if value.contains("만") { return value }
-        let digits = value.filter { $0.isNumber }
-        guard !digits.isEmpty else { return value }
-        let intValue = Int(digits) ?? 0
+    func mileage(from value: Int?) -> String {
+        guard let intValue = value, intValue > 0 else { return "-" }
         if intValue >= 10000 {
             let man = Double(intValue) / 10000.0
             return String(format: man.truncatingRemainder(dividingBy: 1) == 0 ? "%.0f만km" : "%.1f만km", man)
         }
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
-        let formatted = formatter.string(from: NSNumber(value: intValue)) ?? digits
+        let formatted = formatter.string(from: NSNumber(value: intValue)) ?? String(intValue)
         return formatted + "km"
     }
 
-    func options(_ options: [ProductOptionDTO]?) -> [String] {
-        options?.filter { $0.isInclude }.map { $0.optionName } ?? []
-    }
-
-    func seller(from dto: ProductSellerDTO?) -> Seller {
+    func seller(from dto: VehicleSellerDomainModel) -> Seller {
         Seller(
-            id: String(dto?.userId ?? 0),
-            name: dto?.nickName ?? "판매자 정보 없음",
-            avatar: "bannerImage",
-            totalListings: dto?.sellingCount ?? 0,
-            totalSales: dto?.completeCount ?? 0,
-            rating: dto?.rating ?? 0,
-            isDealer: (dto?.role ?? "").uppercased() == "DEALER"
+            id: dto.id,
+            name: dto.name.isEmpty ? dto.nickname : dto.name,
+            avatar: dto.avatarURL.isEmpty ? "bannerImage" : dto.avatarURL,
+            totalListings: dto.totalListings,
+            totalSales: dto.totalSales,
+            rating: 0,
+            isDealer: dto.isDealer
         )
     }
 
-    static func mapStatus(_ raw: String?) -> VehicleStatus {
-        let val = (raw ?? "").uppercased()
-        switch val {
-        case "AVAILABLE", "ACTIVE": return .active
-        case "RESERVED": return .reserved
-        case "SOLD", "COMPLETED", "SOLD_OUT": return .sold
-        default: return .active
+    func mapStatus(_ status: VehicleStatusDomain) -> VehicleStatus {
+        switch status {
+        case .active: return .active
+        case .reserved: return .reserved
+        case .sold: return .sold
         }
     }
 }
 
-private extension Substring {
-    func toInt() -> Int? { Int(self) }
+private extension VehicleStatus {
+    var asDomain: VehicleStatusDomain {
+        switch self {
+        case .active: return .active
+        case .reserved: return .reserved
+        case .sold: return .sold
+        }
+    }
 }

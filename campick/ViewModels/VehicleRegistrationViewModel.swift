@@ -1,9 +1,15 @@
 import Foundation
 import SwiftUI
 import PhotosUI
+import UIKit
 
 @MainActor
 final class VehicleRegistrationViewModel: ObservableObject {
+    private let fetchMetadataUseCase: FetchVehicleMetadataUseCase
+    private let createVehicleUseCase: CreateVehicleUseCase
+    private let updateVehicleUseCase: UpdateVehicleUseCase
+    private let fetchVehicleDetailUseCase: FetchVehicleDetailUseCase
+
     // Form fields
     @Published var vehicleImages: [VehicleImage] = []
     @Published var uploadedImageUrls: [String] = []
@@ -37,13 +43,26 @@ final class VehicleRegistrationViewModel: ObservableObject {
     @Published var isEditing = false
     @Published var editingProductId: String? = nil
 
+    init(
+        fetchMetadataUseCase: FetchVehicleMetadataUseCase = VehicleDependencyContainer.shared.fetchVehicleMetadataUseCase(),
+        createVehicleUseCase: CreateVehicleUseCase = VehicleDependencyContainer.shared.createVehicleUseCase(),
+        updateVehicleUseCase: UpdateVehicleUseCase = VehicleDependencyContainer.shared.updateVehicleUseCase(),
+        fetchVehicleDetailUseCase: FetchVehicleDetailUseCase = VehicleDependencyContainer.shared.fetchVehicleDetailUseCase()
+    ) {
+        self.fetchMetadataUseCase = fetchMetadataUseCase
+        self.createVehicleUseCase = createVehicleUseCase
+        self.updateVehicleUseCase = updateVehicleUseCase
+        self.fetchVehicleDetailUseCase = fetchVehicleDetailUseCase
+    }
+
     func loadProductInfo() async {
         isLoadingProductInfo = true
+        defer { isLoadingProductInfo = false }
         do {
-            let productInfo = try await ProductAPI.fetchProductInfo()
-            availableTypes = productInfo.type
-            availableModels = productInfo.model
-            availableOptions = productInfo.option
+            let productInfo = try await fetchMetadataUseCase.execute()
+            availableTypes = productInfo.types
+            availableModels = productInfo.models
+            availableOptions = productInfo.options
             vehicleOptions = availableOptions.map { VehicleOption(optionName: $0, isInclude: false) }
         } catch {
             let appError = ErrorMapper.map(error)
@@ -54,58 +73,42 @@ final class VehicleRegistrationViewModel: ObservableObject {
             availableOptions = ["샤워실", "화장실", "침대", "주방", "에어컨"]
             vehicleOptions = availableOptions.map { VehicleOption(optionName: $0, isInclude: false) }
         }
-        isLoadingProductInfo = false
     }
 
-    // 편집 모드: 상세를 불러와 입력값 채우기
     func loadForEdit(productId: String) async {
         isEditing = true
         editingProductId = productId
         do {
-            let dto = try await ProductAPI.fetchProductDetail(productId: productId)
-            apply(detail: dto)
+            let detail = try await fetchVehicleDetailUseCase.execute(productId: productId)
+            apply(detail: detail)
         } catch {
             let appError = ErrorMapper.map(error)
             AppLog.error("Load detail for edit failed: \(appError.message)", category: "PRODUCT")
         }
     }
 
-    private func apply(detail dto: ProductDetailDTO) {
-        title = dto.title ?? ""
-        generation = {
-            if let g = dto.generation { return String(g) }
-            return ""
-        }()
-        mileage = dto.mileage ?? ""
-        vehicleType = dto.vehicleType ?? ""
-        vehicleModel = dto.vehicleModel ?? ""
-        price = dto.price ?? ""
-        location = dto.location ?? ""
-        plateHash = dto.plateHash ?? ""
-        description = dto.description ?? ""
+    private func apply(detail: VehicleDetailDomainModel) {
+        title = detail.title
+        generation = detail.generation.map { String($0) } ?? ""
+        mileage = detail.mileage.map { String($0) } ?? ""
+        vehicleType = detail.vehicleType
+        vehicleModel = detail.vehicleModel
+        price = detail.price.map { String($0) } ?? ""
+        location = detail.location
+        plateHash = detail.plateHash
+        description = detail.description
 
-        // 이미지 URL 세팅 (메인 + 나머지)
-        if let urls = dto.productImage, !urls.isEmpty {
-            uploadedImageUrls = urls
-
-            // 기존 이미지들을 VehicleImage 객체로 변환 (첫 번째가 메인)
-            vehicleImages = urls.enumerated().compactMap { index, url in
-                guard !url.isEmpty else { return nil }
-                return VehicleImage(
-                    image: UIImage(), // 실제 이미지는 URL로 로드됨
-                    isMain: index == 0, // 첫 번째 이미지가 메인
-                    uploadedUrl: url
-                )
-            }
+        uploadedImageUrls = detail.images
+        vehicleImages = detail.images.enumerated().compactMap { index, url in
+            guard !url.isEmpty else { return nil }
+            return VehicleImage(image: UIImage(), isMain: index == 0, uploadedUrl: url)
         }
 
-        // 옵션 매핑: availableOptions를 기준으로 포함 여부 세팅
-        if let opts = dto.option {
-            let included = Set(opts.filter { $0.isInclude }.map { $0.optionName })
-            vehicleOptions = availableOptions.map { name in
-                VehicleOption(optionName: name, isInclude: included.contains(name))
-            }
+        if availableOptions.isEmpty {
+            availableOptions = detail.features
         }
+        let included = Set(detail.features)
+        vehicleOptions = availableOptions.map { VehicleOption(optionName: $0, isInclude: included.contains($0)) }
     }
 
     func validateAndSubmit() {
@@ -139,44 +142,34 @@ final class VehicleRegistrationViewModel: ObservableObject {
     func submit() async {
         isSubmitting = true
         defer { isSubmitting = false }
-        // 숫자 필드 정리
+
         let cleanPrice = price.replacingOccurrences(of: ",", with: "")
         let cleanMileage = mileage.replacingOccurrences(of: ",", with: "")
-        // 한글 값 그대로 전송
-        let localizedType = vehicleType
-        let localizedModel = vehicleModel
-        // 이미지 정책: 메인 이미지를 배열 첫번째로 위치시키기
         let mainImage = vehicleImages.first { $0.isMain }
         let mainUrl = mainImage?.uploadedUrl ?? ""
         let productUrls = uploadedImageUrls.filter { $0 != mainUrl }
 
-        let request = VehicleRegistrationRequest(
+        let draft = VehicleDraftDomainModel(
             generation: Int(generation) ?? 0,
             mileage: cleanMileage,
-            vehicleType: localizedType,
-            vehicleModel: localizedModel,
+            vehicleType: vehicleType,
+            vehicleModel: vehicleModel,
             price: cleanPrice,
             location: location,
             plateHash: plateHash,
             title: title,
             description: description,
-            productImageUrl: productUrls,
-            option: vehicleOptions,
-            mainProductImageUrl: mainUrl
+            optionNames: vehicleOptions.map { $0.optionName },
+            includedOptionNames: Set(vehicleOptions.filter { $0.isInclude }.map { $0.optionName }),
+            mainImageURL: mainUrl,
+            additionalImageURLs: productUrls
         )
 
         if isEditing, let productId = editingProductId {
             AppLog.info("Updating product (id: \(productId))", category: "PRODUCT")
             do {
-                let res = try await ProductAPI.updateProduct(productId: productId, body: request)
-                let statusCode = res.status ?? 0
-                if res.success == true || (200..<300).contains(statusCode) {
-                    alertMessage = "성공적으로 매물 정보가 수정되었습니다."
-                    showingSuccessAlert = true
-                } else {
-                    alertMessage = res.message ?? "수정에 실패했습니다."
-                    showingErrorAlert = true
-                }
+                let result = try await updateVehicleUseCase.execute(productId: productId, draft: draft)
+                handleResult(result, defaultMessage: "성공적으로 매물 정보가 수정되었습니다.")
             } catch {
                 let appError = ErrorMapper.map(error)
                 AppLog.error("Product update failed: \(appError.message)", category: "PRODUCT")
@@ -186,45 +179,25 @@ final class VehicleRegistrationViewModel: ObservableObject {
         } else {
             AppLog.info("Creating product (title: \(title))", category: "PRODUCT")
             do {
-                let res = try await ProductAPI.createProduct(request)
-                // 성공은 2xx(예: 200, 201 포함) 또는 success == true 로 판단
-                let statusCode = res.status ?? 0
-                if res.success == true || (200..<300).contains(statusCode) {
-                    alertMessage = res.message ?? "등록이 완료되었습니다."
-                    showingSuccessAlert = true
-                } else {
-                    alertMessage = res.message ?? "등록에 실패했습니다."
-                    showingErrorAlert = true
-                }
+                let result = try await createVehicleUseCase.execute(draft: draft)
+                handleResult(result, defaultMessage: "등록이 완료되었습니다.")
             } catch {
                 let appError = ErrorMapper.map(error)
-                AppLog.error("Product create failed: \(appError.message)", category: "PRODUCT")
+                AppLog.error("Product creation failed: \(appError.message)", category: "PRODUCT")
                 alertMessage = appError.message
                 showingErrorAlert = true
             }
         }
     }
 
-    // MARK: - Image Upload
-    func uploadImage(_ image: UIImage, for imageId: UUID) {
-        isUploading = true
-        ImageUploadService.shared.uploadImage(image) { [weak self] result in
-            Task { @MainActor in
-                guard let self else { return }
-                self.isUploading = false
-                switch result {
-                case .success(let url):
-                    self.uploadedImageUrls.append(url)
-                    if let index = self.vehicleImages.firstIndex(where: { $0.id == imageId }) {
-                        self.vehicleImages[index].uploadedUrl = url
-                    }
-                    AppLog.info("Image uploaded: \(url)", category: "UPLOAD")
-                case .failure(let error):
-                    let appError = ErrorMapper.map(error)
-                    self.errors["images"] = appError.message
-                    AppLog.error("Image upload failed: \(appError.message)", category: "UPLOAD")
-                }
-            }
+    private func handleResult(_ result: VehicleRegistrationResultDomainModel, defaultMessage: String) {
+        let succeeded = result.success || (200..<300).contains(result.statusCode)
+        if succeeded {
+            alertMessage = result.message.isEmpty ? defaultMessage : result.message
+            showingSuccessAlert = true
+        } else {
+            alertMessage = result.message.isEmpty ? "요청이 실패했습니다." : result.message
+            showingErrorAlert = true
         }
     }
 }

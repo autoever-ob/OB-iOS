@@ -50,19 +50,19 @@ struct RecommendVehicle: View {
                 } else {
                     ForEach(Array(homeVehicleViewModel.vehicles.enumerated()), id: \.element.id) { index, vehicle in
                         NavigationLink {
-                            VehicleDetailView(vehicleId: String(vehicle.productId))
+                            VehicleDetailView(vehicleId: vehicle.productId)
                         } label: {
                             VehicleCard(
-                                image: vehicle.thumbNail ?? "",
+                                image: vehicle.thumbnailURLString,
                                 title: vehicle.title,
-                                generation: homeVehicleViewModel.formatGeneration(vehicle.generation),
-                                milage: homeVehicleViewModel.formatMileage(vehicle.mileage),
-                                price: homeVehicleViewModel.formatPrice(vehicle.price),
-                                likeCount: vehicle.likeCount ?? 0,
+                                generation: vehicle.generationText,
+                                milage: vehicle.mileageText,
+                                price: vehicle.priceText,
+                                likeCount: vehicle.likeCount,
                                 badge: index == 0 ? "NEW" : (index == 1 ? "HOT" : nil),
                                 badgeColor: index == 0 ? AppColors.brandLightGreen : (index == 1 ? AppColors.brandOrange : .clear),
                                 isLiked: vehicle.isLiked,
-                                onLike: { homeVehicleViewModel.toggleLike(productId: vehicle.id) }
+                                onLike: { homeVehicleViewModel.toggleLike(productId: vehicle.productId) }
                             )
                         }
                         .buttonStyle(PlainButtonStyle())

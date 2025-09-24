@@ -9,22 +9,24 @@ import Foundation
 
 
 final class HomeProfileViewModel: ObservableObject {
-    
+    private let logoutUseCase: LogoutUseCase
+
     @Published var totalUnreadCount: Int = 0
     @Published var isLoading: Bool = false
+    
+    init(logoutUseCase: LogoutUseCase = AuthDependencyContainer.shared.logoutUseCase()) {
+        self.logoutUseCase = logoutUseCase
+    }
     
     
     func logout() {
         Task {
             do {
-                AppLog.info("Requesting logout", category: "AUTH")
-                try await AuthAPI.logout()
-                AppLog.info("Logout success", category: "AUTH")
+                try await logoutUseCase.execute()
             } catch {
-                let appError = ErrorMapper.map(error)
-                AppLog.error("Logout failed: \(appError.message)", category: "AUTH")
+                let mapped = ErrorMapper.map(error)
+                AppLog.error("Logout failed: \(mapped.message)", category: "AUTH")
             }
-            await MainActor.run { UserState.shared.logout() }
         }
     }
 
@@ -45,5 +47,3 @@ final class HomeProfileViewModel: ObservableObject {
             }
         }
 }
-
-

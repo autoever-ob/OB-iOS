@@ -6,18 +6,20 @@
 //
 
 import Foundation
-import Alamofire
-
 class AuthService: ObservableObject {
     static let shared = AuthService()
 
-    private init() {}
+    private let logoutUseCase: LogoutUseCase
 
-    // 로그아웃 API 호출: AuthAPI 사용해 토큰 포함 POST /api/member/logout 요청
+    private init(logoutUseCase: LogoutUseCase = AuthDependencyContainer.shared.logoutUseCase()) {
+        self.logoutUseCase = logoutUseCase
+    }
+
+    // 로그아웃 API 호출: Clean Architecture 경유
     func logout() async throws {
         do {
             AppLog.info("Requesting logout", category: "AUTH")
-            try await AuthAPI.logout()
+            try await logoutUseCase.execute()
             AppLog.info("Logout success", category: "AUTH")
         } catch {
             let appError = ErrorMapper.map(error)

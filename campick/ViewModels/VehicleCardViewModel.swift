@@ -10,6 +10,7 @@ import SwiftUI
 
 @MainActor
 final class VehicleCardViewModel: ObservableObject {
+    private let toggleLikeUseCase: ToggleVehicleLikeUseCase
     // Display properties
     let productId: String?
     let imageName: String?
@@ -27,7 +28,8 @@ final class VehicleCardViewModel: ObservableObject {
     @Published var isFavorite: Bool
 
     // Initializers
-    init(vehicle: Vehicle) {
+    init(vehicle: Vehicle, toggleLikeUseCase: ToggleVehicleLikeUseCase = VehicleDependencyContainer.shared.toggleLikeUseCase()) {
+        self.toggleLikeUseCase = toggleLikeUseCase
         self.productId = vehicle.id
         self.imageName = vehicle.imageName
         self.thumbnailURL = vehicle.thumbnailURL
@@ -53,8 +55,10 @@ final class VehicleCardViewModel: ObservableObject {
         imageName: String? = nil,
         thumbnailURL: URL? = nil,
         isOnSale: Bool = true,
-        isFavorite: Bool = false
+        isFavorite: Bool = false,
+        toggleLikeUseCase: ToggleVehicleLikeUseCase = VehicleDependencyContainer.shared.toggleLikeUseCase()
     ) {
+        self.toggleLikeUseCase = toggleLikeUseCase
         self.productId = nil
         self.imageName = imageName
         self.thumbnailURL = thumbnailURL
@@ -75,7 +79,7 @@ final class VehicleCardViewModel: ObservableObject {
         guard let productId else { return }
         Task {
             do {
-                try await ProductAPI.likeProduct(productId: productId)
+                try await toggleLikeUseCase.execute(productId: productId)
             } catch {
                 let app = ErrorMapper.map(error)
                 AppLog.error("Like failed (\(productId)): \(app.message)", category: "PRODUCT")
