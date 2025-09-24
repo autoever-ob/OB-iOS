@@ -61,15 +61,17 @@ struct MessageList: View {
 //                    }
                     
                     // MARK: - 페이지네이션 채팅 리스트 렌더링
+                    var orderedMessages: [Chat] {
+                        viewModel.messages.sorted { $0.sendAt < $1.sendAt }
+                    }
                     ForEach(Array(viewModel.messages.enumerated()), id: \.1.id) { index, msg in
                         MessageBubble(
                             message: msg,
-                            isLast: index == viewModel.messages.count - 1,
+                            isLast: msg.id == viewModel.messages.last?.id,
                             viewModel: viewModel
                         )
                         .id(msg.id)
                         .onAppear {
-                            print("👀 index=\(index), msg=\(msg.id)")
                             if index == 0 && !viewModel.isLoading {
                                 viewModel.loadChatRoom(chatRoomId: chatRoomId, reset: false)
                             }
@@ -108,12 +110,28 @@ struct MessageList: View {
                 }
             )
             .coordinateSpace(name: "scroll")
+//            .onAppear {
+//                scrollProxy = proxy
+//                guard !didScrollToBottomInitially else { return }
+//                didScrollToBottomInitially = true
+//                scrollToBottom(proxy: proxy, animated: false)
+//                
+//            }
             .onAppear {
                 scrollProxy = proxy
-                guard !didScrollToBottomInitially else { return }
-                didScrollToBottomInitially = true
-                scrollToBottom(proxy: proxy, animated: false)
-                
+                // 진입 시 최초 스크롤: 맨 위
+                if let firstId = viewModel.messages.first?.id {
+                    proxy.scrollTo(firstId, anchor: .top)
+                }
+            }
+
+            .onChange(of: viewModel.messages.count) { _, _ in
+                // 이후 새 메시지 추가되면 맨 아래로
+                if let lastId = viewModel.messages.last?.id {
+                    withAnimation(.easeInOut) {
+                        proxy.scrollTo(lastId, anchor: .bottom)
+                    }
+                }
             }
             .onChange(of: viewModel.messages.count) { _, _ in
                 scrollToBottom(proxy: proxy, animated: true)

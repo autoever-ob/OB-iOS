@@ -172,7 +172,7 @@ struct ChatRoomView: View {
             }
             viewModel.bindWebSocket()
             viewModel.loadChatRoom(chatRoomId: chatRoomId, reset: true)
-            
+                
             viewModel.observeChatRoomOnlineStatus(chatId: chatRoomId)
 
             
