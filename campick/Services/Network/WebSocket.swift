@@ -12,7 +12,6 @@ class WebSocket {
     private var webSocketTask: URLSessionWebSocketTask?
     
     var onMessageReceived: ((WebSocketResponse) -> Void)?
-    var realMessageReceived: ((ReceivedChatMessageData) -> Void)?
 
     var isConnected: Bool {
         return webSocketTask?.state == .running
@@ -29,46 +28,13 @@ class WebSocket {
         sendChatInit()
         
         print("📡 receive() 호출 직전")
-        receiveMessage()
-        receiveOnline()
+        receive()
         print("📡 receive() 호출 직후")
 //        startPing()
         
     }
     
-    func receiveMessage() {
-        print("메시지 수신중")
-        webSocketTask?.receive { [weak self] result in
-            switch result {
-            case .failure(let error):
-                print("수신 실패:", error)
-            case .success(let message):
-                switch message {
-                case .string(let text):
-                    print("받은 메시지(raw):", text)
-                    if let data = text.data(using: .utf8) {
-                        do {
-                            let decoded = try JSONDecoder().decode(ReceivedChatMessagePayload.self, from: data)
-                            print("받은 메시지 디코딩 성공:", decoded)
-                            DispatchQueue.main.async {
-                                self?.realMessageReceived?(decoded.data)
-                            }
-                        } catch {
-                            print("🚨받은 메시지 디코딩 실패:", error)
-                        }
-                    }
-                case .data(let data):
-                    print("바이너리 데이터:", data)
-                @unknown default:
-                    break
-                }
-            }
-            self?.receiveMessage()
-        }
-    }
-
-
-    func receiveOnline() {
+    func receive() {
         print("메시지 수신중")
             webSocketTask?.receive { [weak self] result in
                 switch result {
@@ -94,7 +60,7 @@ class WebSocket {
                         break
                     }
                 }
-                self?.receiveOnline()
+                self?.receive()
             }
         }
     
