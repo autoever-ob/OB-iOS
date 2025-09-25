@@ -33,22 +33,15 @@ final class ChatViewModel: ObservableObject {
     //        }
     //    }
     func bindWebSocket() {
-        WebSocket.shared.onMessageReceived = { [weak self] response in
-            guard let self = self else { return }
+        WebSocket.shared.realMessageReceived = { [weak self] newMessage in
             
-            switch response {
-            case .chat(let chatData):
-                let chat = Chat(
-                    message: chatData.content,
-                    senderId: chatData.senderId,
-                    sendAt: chatData.sendAt,
-                    isRead: chatData.isRead
-                )
-                self.messages.append(chat)
-                
-            case .online(let onlineList):
-                print("온라인 상태 업데이트는 ChatListViewModel에서 처리해야 함: \(onlineList)")
-            }
+            let chat = Chat(
+                message: newMessage.content,
+                senderId: newMessage.senderId,
+                sendAt: newMessage.sendAt,
+                isRead: newMessage.isRead
+            )
+            self?.messages.append(chat)
         }
     }
     

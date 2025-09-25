@@ -69,7 +69,7 @@ struct ChatRoomView: View {
                             Chat(
                                 message: url,
                                 senderId: Int(userState.memberId) ?? 0,
-                                sendAt: ISO8601DateFormatter().string(from: Date()),
+                                sendAt: "방금전",
                                 isRead: false
                             )
                         )
@@ -92,7 +92,7 @@ struct ChatRoomView: View {
                             Chat(
                                 message: message,
                                 senderId: Int(userState.memberId) ?? 0,
-                                sendAt: ISO8601DateFormatter().string(from: Date()),
+                                sendAt: "방금전",
                                 isRead: false
                             )
                         )
