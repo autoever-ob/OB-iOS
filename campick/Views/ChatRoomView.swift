@@ -33,6 +33,7 @@ struct ChatRoomView: View {
                     viewModel: viewModel, showCallAlert: $showCallAlert,
                     onBack: { dismiss() },
                     onCall: {
+                        print(viewModel.messages)
                         if let seller = viewModel.seller {
                             callSeller(seller: seller)
                             print(viewModel.seller?.phoneNumber ?? "no seller phone")
@@ -65,19 +66,20 @@ struct ChatRoomView: View {
                             )
                         )
                         WebSocket.shared.send(payload)
-                        viewModel.messages.append(
-                            Chat(
-                                message: url,
-                                senderId: Int(userState.memberId) ?? 0,
-                                sendAt: "방금전",
-                                isRead: false
-                            )
-                        )
+//                        viewModel.messages.append(
+//                            Chat(
+//                                message: url,
+//                                senderId: Int(userState.memberId) ?? 0,
+//                                sendAt: "방금전",
+//                                isRead: false
+//                            )
+//                        )
 
                         viewModel.uploadedImageUrl = nil
                         pendingImage = nil
                     } else {
                         // 평범한 텍스트 메시지
+                        print(viewModel)
                         let payload = ChatMessagePayload(
                             type: "chat_message",
                             data: ChatMessageData(
@@ -88,14 +90,14 @@ struct ChatRoomView: View {
                         )
                         WebSocket.shared.send(payload)
 
-                        viewModel.messages.append(
-                            Chat(
-                                message: message,
-                                senderId: Int(userState.memberId) ?? 0,
-                                sendAt: "방금전",
-                                isRead: false
-                            )
-                        )
+//                        viewModel.messages.append(
+//                            Chat(
+//                                message: message,
+//                                senderId: Int(userState.memberId) ?? 0,
+//                                sendAt: "방금전",
+//                                isRead: false
+//                            )
+//                        )
                         newMessage = ""
                     }
                 }

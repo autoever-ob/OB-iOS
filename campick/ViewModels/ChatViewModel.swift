@@ -32,18 +32,29 @@ final class ChatViewModel: ObservableObject {
     //            self?.messages.append(chat)
     //        }
     //    }
+//    func bindWebSocket() {
+//        WebSocket.shared.realMessageReceived = { [weak self] newMessage in
+//            
+//            let chat = Chat(
+//                message: newMessage.content,
+//                senderId: newMessage.senderId,
+//                sendAt: newMessage.sendAt,
+//                isRead: newMessage.isRead
+//            )
+//            self?.messages.append(chat)
+//        }
+//    }
     func bindWebSocket() {
-        WebSocket.shared.realMessageReceived = { [weak self] newMessage in
-            
-            let chat = Chat(
-                message: newMessage.content,
-                senderId: newMessage.senderId,
-                sendAt: newMessage.sendAt,
-                isRead: newMessage.isRead
-            )
-            self?.messages.append(chat)
+            WebSocket.shared.realMessageReceived = { [weak self] newMessage in
+                let chat = Chat(
+                    message: newMessage.content,
+                    senderId: newMessage.senderId,
+                    sendAt: newMessage.sendAt,
+                    isRead: newMessage.isRead
+                )
+                self?.messages.append(chat)
+            }
         }
-    }
     
     func loadChatRoom(chatRoomId: Int) {
         ChatService.shared.getChatMessages(chatRoomId: chatRoomId) { [weak self] result in

@@ -112,14 +112,14 @@ struct ChatRoomListView: View {
         .onAppear{
             viewModel.loadChats()
             viewModel.onlineBindWebSocket()
-            Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-                let chatIds = viewModel.chats.map { $0.id }
-                if !chatIds.isEmpty {
-                    let request = IsOnlineRequest(data: ChatIdList(chatId: chatIds))
-                    WebSocket.shared.send(request)
-                    print("온라인 상태 요청 전송: \(chatIds)")
-                }
-            }
+//            Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+//                let chatIds = viewModel.chats.map { $0.id }
+//                if !chatIds.isEmpty {
+//                    let request = IsOnlineRequest(data: ChatIdList(chatId: chatIds))
+//                    WebSocket.shared.send(request)
+//                    print("온라인 상태 요청 전송: \(chatIds)")
+//                }
+//            }
             
             // Chats 온라인 여부
             let chatIds = viewModel.chats.map { $0.id }

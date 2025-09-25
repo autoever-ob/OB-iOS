@@ -13,7 +13,7 @@ class WebSocket {
     
     var onMessageReceived: ((WebSocketResponse) -> Void)?
     var realMessageReceived: ((ReceivedChatMessageData) -> Void)?
-
+    
     var isConnected: Bool {
         return webSocketTask?.state == .running
     }
@@ -29,105 +29,139 @@ class WebSocket {
         sendChatInit()
         
         print("📡 receive() 호출 직전")
-//        receive()
-        receiveMessage()
-        receiveOnline()
+        receive()
+        //        receiveMessage()
+        //        receiveOnline()
         print("📡 receive() 호출 직후")
-//        startPing()
+        //        startPing()
         
     }
     
-//    func receive() {
-//        print("메시지 수신중")
-//            webSocketTask?.receive { [weak self] result in
-//                switch result {
-//                case .failure(let error):
-//                    print("수신 실패:", error)
-//                case .success(let message):
-//                    switch message {
-//                    case .string(let text):
-//                        print("받은 메시지(raw):", text)
-//                        if let data = text.data(using: .utf8) {
-//                            do {
-//                                let decoded = try JSONDecoder().decode(WebSocketResponse.self, from: data)
-//                                DispatchQueue.main.async {
-//                                    self?.onMessageReceived?(decoded)
-//                                }
-//                            } catch {
-//                                print("디코딩 실패:", error)
-//                            }
-//                        }
-//                    case .data(let data):
-//                        print("바이너리 데이터:", data)
-//                    @unknown default:
-//                        break
-//                    }
-//                }
-//                self?.receive()
-//            }
-//        }
+    //    func receive() {
+    //        print("메시지 수신중")
+    //            webSocketTask?.receive { [weak self] result in
+    //                switch result {
+    //                case .failure(let error):
+    //                    print("수신 실패:", error)
+    //                case .success(let message):
+    //                    switch message {
+    //                    case .string(let text):
+    //                        print("받은 메시지(raw):", text)
+    //                        if let data = text.data(using: .utf8) {
+    //                            do {
+    //                                let decoded = try JSONDecoder().decode(WebSocketResponse.self, from: data)
+    //                                DispatchQueue.main.async {
+    //                                    self?.onMessageReceived?(decoded)
+    //                                }
+    //                            } catch {
+    //                                print("디코딩 실패:", error)
+    //                            }
+    //                        }
+    //                    case .data(let data):
+    //                        print("바이너리 데이터:", data)
+    //                    @unknown default:
+    //                        break
+    //                    }
+    //                }
+    //                self?.receive()
+    //            }
+    //        }
     
-    func receiveMessage() {
-            print("메시지 수신중")
-            webSocketTask?.receive { [weak self] result in
-                switch result {
-                case .failure(let error):
-                    print("수신 실패:", error)
-                case .success(let message):
-                    switch message {
-                    case .string(let text):
-                        print("받은 메시지(raw):", text)
-                        if let data = text.data(using: .utf8) {
-                            do {
-                                let decoded = try JSONDecoder().decode(ReceivedChatMessagePayload.self, from: data)
-                                print("받은 메시지 디코딩 성공:", decoded)
-                                DispatchQueue.main.async {
-                                    self?.realMessageReceived?(decoded.data)
-                                }
-                            } catch {
-                                print("🚨받은 메시지 디코딩 실패:", error)
+    //    func receiveMessage() {
+    //            print("메시지 수신중")
+    //            webSocketTask?.receive { [weak self] result in
+    //                switch result {
+    //                case .failure(let error):
+    //                    print("수신 실패:", error)
+    //                case .success(let message):
+    //                    switch message {
+    //                    case .string(let text):
+    //                        print("받은 메시지(raw):", text)
+    //                        if let data = text.data(using: .utf8) {
+    //                            do {
+    //                                let decoded = try JSONDecoder().decode(ReceivedChatMessagePayload.self, from: data)
+    //                                print("받은 메시지 디코딩 성공:", decoded)
+    //                                DispatchQueue.main.async {
+    //                                    self?.realMessageReceived?(decoded.data)
+    //                                }
+    //                            } catch {
+    //                                print("🚨받은 메시지 디코딩 실패:", error)
+    //                            }
+    //                        }
+    //                    case .data(let data):
+    //                        print("바이너리 데이터:", data)
+    //                    @unknown default:
+    //                        break
+    //                    }
+    //                }
+    //                self?.receiveMessage()
+    //            }
+    //        }
+    
+    func receive() {
+        print("메시지 수신중")
+        webSocketTask?.receive { [weak self] result in
+            print(result)
+            switch result {
+            case .failure(let error):
+                print("수신 실패:", error)
+            case .success(let message):
+                switch message {
+                case .string(let text):
+                    print("받은 메시지(raw):", text)
+                    if let data = text.data(using: .utf8) {
+                        do {
+                            let decoded = try JSONDecoder().decode(ReceivedChatMessagePayload.self, from: data)
+                            print("받은 메시지 디코딩 성공:", decoded)
+                            
+                            DispatchQueue.main.async {
+                                self?.realMessageReceived?(decoded.data)
                             }
+                        } catch {
+                            print("디코딩 실패:", error)
                         }
-                    case .data(let data):
-                        print("바이너리 데이터:", data)
-                    @unknown default:
-                        break
                     }
+                case .data(let data):
+                    print("바이너리 데이터:", data)
+                @unknown default:
+                    break
                 }
-                self?.receiveMessage()
             }
+            self?.receive()
         }
-
-
-        func receiveOnline() {
-            print("메시지 수신중")
-                webSocketTask?.receive { [weak self] result in
-                    switch result {
-                    case .failure(let error):
-                        print("수신 실패:", error)
-                    case .success(let message):
-                        switch message {
-                        case .string(let text):
-                            print("받은 메시지(raw):", text)
-                            if let data = text.data(using: .utf8) {
-                                do {
-                                    let decoded = try JSONDecoder().decode(WebSocketResponse.self, from: data)
-                                    DispatchQueue.main.async {
-                                        self?.onMessageReceived?(decoded)
-                                    }
-                                } catch {
-                                    print("디코딩 실패:", error)
-                                }
+    }
+    
+   
+    
+    func receiveOnline() {
+        print("메시지 수신중")
+        webSocketTask?.receive { [weak self] result in
+            switch result {
+            case .failure(let error):
+                print("수신 실패:", error)
+            case .success(let message):
+                switch message {
+                case .string(let text):
+                    print("받은 메시지(raw):", text)
+                    if let data = text.data(using: .utf8) {
+                        do {
+                            let decoded = try JSONDecoder().decode(WebSocketResponse.self, from: data)
+                            DispatchQueue.main.async {
+                                self?.onMessageReceived?(decoded)
                             }
-                        case .data(let data):
-                            print("바이너리 데이터:", data)
-                        @unknown default:
-                            break
+                        } catch {
+                            print("디코딩 실패:", error)
                         }
                     }
-                    self?.receiveOnline()
+                case .data(let data):
+                    print("바이너리 데이터:", data)
+                @unknown default:
+                    break
                 }
             }
+            self?.receiveOnline()
+        }
+    }
     
     // Pong 확인 시 completion 핸들러 호출
     func startPing() {
@@ -144,9 +178,9 @@ class WebSocket {
     }
     
     func sendChatInit() {
-            print("setChatRoom전송")
-            let payload = ChatInit(type: "set_chat_room")
-            send(payload)
+        print("setChatRoom전송")
+        let payload = ChatInit(type: "set_chat_room")
+        send(payload)
     }
     
     
@@ -156,13 +190,13 @@ class WebSocket {
             let jsonData = try encoder.encode(data)
             if let jsonString = String(data: jsonData, encoding: .utf8) {
                 print("📤 전송 시도:", jsonString)
-
+                
                 guard let webSocketTask = webSocketTask else {
                     print("⚠️ webSocketTask is nil")
                     return
                 }
                 print("webSocketTask state:", webSocketTask.state.rawValue) // 0: running, 1: suspended, 2: canceling, 3: completed
-
+                
                 webSocketTask.send(.string(jsonString)) { error in
                     if let error = error {
                         print("전송 실패:", error)

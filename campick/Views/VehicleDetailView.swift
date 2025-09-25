@@ -173,8 +173,8 @@ struct VehicleDetailView: View {
                             .clipShape(Circle())
                             .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 2)
                     }
-                    .disabled(chatMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    .opacity(chatMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.6 : 1.0)
+//                    .disabled(chatMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+//                    ./*opacity(chatMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.6 : 1.0)*/
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 17)
