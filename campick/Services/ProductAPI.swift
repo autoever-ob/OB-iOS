@@ -164,6 +164,19 @@ enum ProductAPI {
             throw ErrorMapper.map(error)
         }
     }
+
+    static func deleteProduct(productId: String) async throws -> ApiResponse<String> {
+        do {
+            AppLog.info("Delete product (id: \(productId))", category: "PRODUCT")
+            let request = APIService.shared
+                .request(Endpoint.productDetail(productId: productId).url, method: .delete)
+                .validate()
+            let res = try await request.serializingDecodable(ApiResponse<String>.self).value
+            return res
+        } catch {
+            throw ErrorMapper.map(error)
+        }
+    }
 }
 
 private extension VehicleStatus {

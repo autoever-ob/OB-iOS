@@ -40,6 +40,20 @@ final class VehicleDetailViewModel: ObservableObject {
             errorMessage = ErrorMapper.map(error).localizedDescription
         }
     }
+
+    func deleteProduct(productId: String) async -> Bool {
+        do {
+            let res = try await ProductAPI.deleteProduct(productId: productId)
+            let ok = (res.success == true) || ((res.status ?? 0) >= 200 && (res.status ?? 0) < 300)
+            if !ok {
+                throw NSError(domain: "ProductDelete", code: res.status ?? -1, userInfo: [NSLocalizedDescriptionKey: res.message ?? "매물 삭제에 실패했습니다."])
+            }
+            return true
+        } catch {
+            errorMessage = ErrorMapper.map(error).localizedDescription
+            return false
+        }
+    }
 }
 
 struct VehicleDetailViewData {

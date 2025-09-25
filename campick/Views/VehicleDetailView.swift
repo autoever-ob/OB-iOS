@@ -19,16 +19,32 @@ struct VehicleDetailView: View {
     @State private var navigateToEdit = false
     @State private var navigateToChat = false
     @State private var createdChatId: Int? = nil
+    @State private var showEditDropdown = false
+    @State private var showDeleteConfirmation = false
 
     init(vehicleId: String, isOwnerHint: Bool = false) {
         self.vehicleId = vehicleId
         self.isOwnerHint = isOwnerHint
     }
 
+    private var topSafeArea: CGFloat {
+        let scenes = UIApplication.shared.connectedScenes
+        let windowScene = scenes.first as? UIWindowScene
+        let window = windowScene?.windows.first { $0.isKeyWindow }
+        return window?.safeAreaInsets.top ?? 0
+    }
+
     var body: some View {
         ZStack {
             AppColors.background
                 .ignoresSafeArea()
+                .onTapGesture {
+                    if showEditDropdown {
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            showEditDropdown = false
+                        }
+                    }
+                }
 
             if let detail = viewModel.detail {
                 ScrollView {
@@ -40,14 +56,67 @@ struct VehicleDetailView: View {
                         return !mine.isEmpty && mine == seller
                     }()
                     VStack {
-                        VehicleImageGallery(
-                            currentImageIndex: $currentImageIndex,
-                            images: detail.images.isEmpty ? ["bannerImage"] : detail.images,
-                            onBackTap: { dismiss() },
-                            showsEditButton: isOwner,
-                            onEditTap: { navigateToEdit = true }
-                        )
-                        .ignoresSafeArea(edges: .top)
+                        ZStack(alignment: .topTrailing) {
+                            VehicleImageGallery(
+                                currentImageIndex: $currentImageIndex,
+                                images: detail.images.isEmpty ? ["bannerImage"] : detail.images,
+                                onBackTap: { dismiss() },
+                                showsEditButton: isOwner,
+                                onEditTap: {
+                                    withAnimation(.easeOut(duration: 0.2)) {
+                                        showEditDropdown.toggle()
+                                    }
+                                }
+                            )
+                            .ignoresSafeArea(edges: .top)
+
+                            if isOwner && showEditDropdown {
+                                VStack(spacing: 0) {
+                                    Button(action: {
+                                        withAnimation {
+                                            showEditDropdown = false
+                                        }
+                                        navigateToEdit = true
+                                    }) {
+                                        HStack {
+                                            Image(systemName: "pencil")
+                                            Text("매물 수정")
+                                            Spacer()
+                                        }
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 12)
+                                        .foregroundColor(.white)
+                                    }
+                                    Divider()
+                                        .background(Color.white.opacity(0.2))
+                                    Button(action: {
+                                        withAnimation {
+                                            showEditDropdown = false
+                                        }
+                                        showDeleteConfirmation = true
+                                    }) {
+                                        HStack {
+                                            Image(systemName: "trash")
+                                            Text("매물 삭제")
+                                            Spacer()
+                                        }
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 12)
+                                        .foregroundColor(.red)
+                                    }
+                                }
+                                .frame(width: 160)
+                                .background(Color.black.opacity(0.9))
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                )
+                                .padding(.top, topSafeArea + 40)
+                                .padding(.trailing, 16)
+                                .transition(.move(edge: .top).combined(with: .opacity))
+                            }
+                        }
                     }
                     
                     VStack(spacing: 20) {
@@ -204,6 +273,19 @@ struct VehicleDetailView: View {
             } else {
                 EmptyView()
             }
+        }
+        .alert("매물을 삭제하시겠습니까?", isPresented: $showDeleteConfirmation) {
+            Button("취소", role: .cancel) { }
+            Button("삭제", role: .destructive) {
+                Task {
+                    let success = await viewModel.deleteProduct(productId: vehicleId)
+                    if success {
+                        dismiss()
+                    }
+                }
+            }
+        } message: {
+            Text("삭제된 매물은 복구할 수 없습니다.")
         }
         .task { await viewModel.load(productId: vehicleId) }
         .onChange(of: viewModel.detail?.isLiked ?? false) { isLiked in
