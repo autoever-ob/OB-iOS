@@ -39,7 +39,7 @@ final class VehicleRepositoryImpl: VehicleRepository {
     func updateVehicleStatus(productId: String, status: VehicleStatusDomain) async throws {
         let apiStatus = mapStatus(status)
         let response = try await remote.updateProductStatus(productId: productId, status: apiStatus)
-        let success = response.success || (200..<300).contains(response.status ?? 0)
+        let success = (response.success ?? false) || (200..<300).contains(response.status ?? 0)
         if !success {
             throw NSError(
                 domain: "VehicleStatusUpdate",
