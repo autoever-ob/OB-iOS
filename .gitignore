@@ -42,3 +42,7 @@ Pods/
 
 .DS_Store
 클린아키텍처+MVVM.md
+refactor_background.md
+vehicle_refactor_notes.md
+auth_refactor_notes.md
+ProductAPI_migration_plan.md
