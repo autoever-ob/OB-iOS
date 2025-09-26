@@ -90,4 +90,18 @@ extension Page {
              sort: nil,
              pageable: nil)
     }
+
+    static func empty(page: Int, size: Int) -> Page<T> {
+        Page(content: [],
+             totalElements: 0,
+             totalPages: 0,
+             size: size,
+             number: page,
+             numberOfElements: 0,
+             first: page == 0,
+             last: true,
+             empty: true,
+             sort: nil,
+             pageable: nil)
+    }
 }
