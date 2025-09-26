@@ -24,10 +24,10 @@ enum VehicleDataMapper {
         let items = page.content.map(mapSummary)
         return VehicleListPageDomainModel(
             items: items,
-            totalElements: page.totalElements,
-            totalPages: page.totalPages,
-            currentPage: page.number,
-            isLast: page.last
+            totalElements: page.totalElements ?? items.count,
+            totalPages: page.totalPages ?? 1,
+            currentPage: page.number ?? 0,
+            isLast: page.last ?? true
         )
     }
 
@@ -111,7 +111,7 @@ enum VehicleDataMapper {
 
     static func mapRegistrationResult(_ response: ApiResponse<Int>) -> VehicleRegistrationResultDomainModel {
         VehicleRegistrationResultDomainModel(
-            success: response.success,
+            success: response.success ?? false,
             statusCode: response.status ?? 0,
             message: response.message ?? "",
             productId: response.data
