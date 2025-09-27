@@ -9,6 +9,7 @@ final class VehicleRegistrationViewModel: ObservableObject {
     private let createVehicleUseCase: CreateVehicleUseCase
     private let updateVehicleUseCase: UpdateVehicleUseCase
     private let fetchVehicleDetailUseCase: FetchVehicleDetailUseCase
+    private let imageUploadService: ImageUploadService
 
     // Form fields
     @Published var vehicleImages: [VehicleImage] = []
@@ -47,12 +48,14 @@ final class VehicleRegistrationViewModel: ObservableObject {
         fetchMetadataUseCase: FetchVehicleMetadataUseCase = VehicleDependencyContainer.shared.fetchVehicleMetadataUseCase(),
         createVehicleUseCase: CreateVehicleUseCase = VehicleDependencyContainer.shared.createVehicleUseCase(),
         updateVehicleUseCase: UpdateVehicleUseCase = VehicleDependencyContainer.shared.updateVehicleUseCase(),
-        fetchVehicleDetailUseCase: FetchVehicleDetailUseCase = VehicleDependencyContainer.shared.fetchVehicleDetailUseCase()
+        fetchVehicleDetailUseCase: FetchVehicleDetailUseCase = VehicleDependencyContainer.shared.fetchVehicleDetailUseCase(),
+        imageUploadService: ImageUploadService = .shared
     ) {
         self.fetchMetadataUseCase = fetchMetadataUseCase
         self.createVehicleUseCase = createVehicleUseCase
         self.updateVehicleUseCase = updateVehicleUseCase
         self.fetchVehicleDetailUseCase = fetchVehicleDetailUseCase
+        self.imageUploadService = imageUploadService
     }
 
     func loadProductInfo() async {
@@ -188,6 +191,42 @@ final class VehicleRegistrationViewModel: ObservableObject {
                 showingErrorAlert = true
             }
         }
+    }
+
+    func uploadImage(_ image: UIImage, for imageId: UUID) {
+        isUploading = true
+        imageUploadService.uploadImage(image) { [weak self] result in
+            Task { @MainActor in
+                guard let self else { return }
+                self.isUploading = false
+
+                switch result {
+                case .success(let url):
+                    self.errors["images"] = nil
+                    if let index = self.vehicleImages.firstIndex(where: { $0.id == imageId }) {
+                        self.vehicleImages[index].uploadedUrl = url
+
+                        if self.vehicleImages[index].isMain {
+                            self.uploadedImageUrls.removeAll { $0 == url }
+                            self.uploadedImageUrls.insert(url, at: 0)
+                        } else {
+                            self.appendUploadedUrlIfNeeded(url)
+                        }
+                    } else {
+                        self.appendUploadedUrlIfNeeded(url)
+                    }
+                case .failure(let error):
+                    let appError = ErrorMapper.map(error)
+                    self.errors["images"] = appError.message
+                    self.vehicleImages.removeAll { $0.id == imageId }
+                }
+            }
+        }
+    }
+
+    private func appendUploadedUrlIfNeeded(_ url: String) {
+        guard !uploadedImageUrls.contains(url) else { return }
+        uploadedImageUrls.append(url)
     }
 
     private func handleResult(_ result: VehicleRegistrationResultDomainModel, defaultMessage: String) {
