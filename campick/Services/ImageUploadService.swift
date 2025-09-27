@@ -9,7 +9,11 @@ import Foundation
 import UIKit
 import Alamofire
 
-class ImageUploadService {
+protocol ImageUploadServicing {
+    func uploadImage(_ image: UIImage, completion: @escaping (Result<String, Error>) -> Void)
+}
+
+class ImageUploadService: ImageUploadServicing {
     static let shared = ImageUploadService()
     private init() {}
 

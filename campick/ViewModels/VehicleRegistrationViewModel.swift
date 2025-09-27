@@ -9,7 +9,7 @@ final class VehicleRegistrationViewModel: ObservableObject {
     private let createVehicleUseCase: CreateVehicleUseCase
     private let updateVehicleUseCase: UpdateVehicleUseCase
     private let fetchVehicleDetailUseCase: FetchVehicleDetailUseCase
-    private let imageUploadService: ImageUploadService
+    private let imageUploadService: ImageUploadServicing
 
     // Form fields
     @Published var vehicleImages: [VehicleImage] = []
@@ -49,7 +49,7 @@ final class VehicleRegistrationViewModel: ObservableObject {
         createVehicleUseCase: CreateVehicleUseCase = VehicleDependencyContainer.shared.createVehicleUseCase(),
         updateVehicleUseCase: UpdateVehicleUseCase = VehicleDependencyContainer.shared.updateVehicleUseCase(),
         fetchVehicleDetailUseCase: FetchVehicleDetailUseCase = VehicleDependencyContainer.shared.fetchVehicleDetailUseCase(),
-        imageUploadService: ImageUploadService = .shared
+        imageUploadService: ImageUploadServicing = ImageUploadService.shared
     ) {
         self.fetchMetadataUseCase = fetchMetadataUseCase
         self.createVehicleUseCase = createVehicleUseCase

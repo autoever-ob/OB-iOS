@@ -8,10 +8,17 @@
 import SwiftUI
 
 struct VehicleImage: Identifiable, Hashable {
-    let id = UUID()
+    let id: UUID
     var image: UIImage
-    var isMain: Bool = false
-    var uploadedUrl: String? = nil
+    var isMain: Bool
+    var uploadedUrl: String?
+
+    init(id: UUID = UUID(), image: UIImage, isMain: Bool = false, uploadedUrl: String? = nil) {
+        self.id = id
+        self.image = image
+        self.isMain = isMain
+        self.uploadedUrl = uploadedUrl
+    }
 }
 
 

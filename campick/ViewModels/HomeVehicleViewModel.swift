@@ -43,10 +43,14 @@ final class HomeVehicleViewModel: ObservableObject {
     func loadRecommendVehicles() {
         isLoading = true
         Task {
-            defer { isLoading = false }
+            defer {
+                Task { @MainActor in
+                    self.isLoading = false
+                }
+            }
             do {
                 let recommendations = try await fetchRecommendationsUseCase.execute()
-                let viewData = recommendations.enumerated().map { index, model in
+                let viewData = recommendations.map { model in
                     VehicleCardData(
                         id: model.id,
                         productId: model.productId,
@@ -60,10 +64,14 @@ final class HomeVehicleViewModel: ObservableObject {
                         badge: model.highlightTag
                     )
                 }
-                vehicles = viewData
+                await MainActor.run {
+                    self.vehicles = viewData
+                }
                 await preloadVehicleImages(viewData)
             } catch {
-                errorMessage = ErrorMapper.map(error).localizedDescription
+                await MainActor.run {
+                    self.errorMessage = ErrorMapper.map(error).localizedDescription
+                }
             }
         }
     }
@@ -81,7 +89,11 @@ final class HomeVehicleViewModel: ObservableObject {
         vehicles[idx] = current
 
         Task {
-            defer { likingIds.remove(productId) }
+            defer {
+                Task { @MainActor in
+                    self.likingIds.remove(productId)
+                }
+            }
             do {
                 try await toggleLikeUseCase.execute(productId: productId)
             } catch {
@@ -125,11 +137,12 @@ final class HomeVehicleViewModel: ObservableObject {
         return "\(value)년식"
     }
 
-    @MainActor
     private func preloadVehicleImages(_ vehicles: [VehicleCardData]) async {
         guard !vehicles.isEmpty else { return }
 
-        self.isPreloadingImages = true
+        await MainActor.run {
+            self.isPreloadingImages = true
+        }
 
         // Preload thumbnail images in parallel
         await withTaskGroup(of: Void.self) { group in
@@ -166,6 +179,8 @@ final class HomeVehicleViewModel: ObservableObject {
             }
         }
 
-        self.isPreloadingImages = false
+        await MainActor.run {
+            self.isPreloadingImages = false
+        }
     }
 }
