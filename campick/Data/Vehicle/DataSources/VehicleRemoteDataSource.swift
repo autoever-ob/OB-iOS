@@ -14,8 +14,14 @@ protocol VehicleRemoteDataSource {
 }
 
 struct DefaultVehicleRemoteDataSource: VehicleRemoteDataSource {
+    private let client: VehicleAPIClient
+
+    init(client: VehicleAPIClient = VehicleAPIClient()) {
+        self.client = client
+    }
+
     func fetchRecommendations() async throws -> VehicleResponse {
-        let wrapped: ApiResponse<VehicleResponse> = try await decodableRequest(
+        let wrapped: ApiResponse<VehicleResponse> = try await client.requestDecodable(
             url: Endpoint.carRecommend.url,
             method: .get
         )
@@ -31,7 +37,7 @@ struct DefaultVehicleRemoteDataSource: VehicleRemoteDataSource {
 
     func toggleLike(productId: String) async throws {
         AppLog.info("Like product: \(productId)", category: "PRODUCT")
-        try await dataRequest(
+        try await client.requestData(
             url: Endpoint.productLike(productId: productId).url,
             method: .patch
         )
@@ -52,7 +58,7 @@ struct DefaultVehicleRemoteDataSource: VehicleRemoteDataSource {
         }
         if let sort { params["sort"] = sort.queryValue }
 
-        let wrapped: ApiResponse<Page<ProductItemDTO>> = try await decodableRequest(
+        let wrapped: ApiResponse<Page<ProductItemDTO>> = try await client.requestDecodable(
             url: Endpoint.products.url,
             method: .get,
             parameters: params,
@@ -62,7 +68,7 @@ struct DefaultVehicleRemoteDataSource: VehicleRemoteDataSource {
     }
 
     func fetchProductDetail(productId: String) async throws -> ProductDetailDTO {
-        let wrapped: ProductDetailResponse = try await decodableRequest(
+        let wrapped: ProductDetailResponse = try await client.requestDecodable(
             url: Endpoint.productDetail(productId: productId).url,
             method: .get
         )
@@ -82,7 +88,7 @@ struct DefaultVehicleRemoteDataSource: VehicleRemoteDataSource {
             "productId": Int(productId) ?? 0,
             "status": status.apiValue
         ]
-        return try await decodableRequest(
+        return try await client.requestDecodable(
             url: Endpoint.productStatus.url,
             method: .patch,
             parameters: body,
@@ -92,7 +98,7 @@ struct DefaultVehicleRemoteDataSource: VehicleRemoteDataSource {
 
     func fetchFavorites(memberId: String, page: Int, size: Int) async throws -> MyProductListPageData {
         let params: [String: Any] = ["page": page, "size": size]
-        let wrapped: ApiResponse<MyProductListPageData> = try await decodableRequest(
+        let wrapped: ApiResponse<MyProductListPageData> = try await client.requestDecodable(
             url: Endpoint.favorites(memberId: memberId).url,
             method: .get,
             parameters: params,
@@ -109,7 +115,7 @@ struct DefaultVehicleRemoteDataSource: VehicleRemoteDataSource {
     }
 
     func fetchProductInfo() async throws -> ProductInfoResponse {
-        let wrapped: ProductInfoApiResponse = try await decodableRequest(
+        let wrapped: ProductInfoApiResponse = try await client.requestDecodable(
             url: Endpoint.productInfo.url,
             method: .get
         )
@@ -125,7 +131,7 @@ struct DefaultVehicleRemoteDataSource: VehicleRemoteDataSource {
 
     func createProduct(_ request: VehicleRegistrationRequest) async throws -> ApiResponse<Int> {
         AppLog.info("Creating product (title: \(request.title))", category: "PRODUCT")
-        return try await decodableRequest(
+        return try await client.requestDecodable(
             url: Endpoint.registerProduct.url,
             method: .post,
             body: request,
@@ -135,7 +141,7 @@ struct DefaultVehicleRemoteDataSource: VehicleRemoteDataSource {
 
     func updateProduct(productId: String, request: VehicleRegistrationRequest) async throws -> ApiResponse<Int> {
         AppLog.info("Updating product (id: \(productId), title: \(request.title))", category: "PRODUCT")
-        return try await decodableRequest(
+        return try await client.requestDecodable(
             url: Endpoint.productDetail(productId: productId).url,
             method: .patch,
             body: request,
@@ -150,58 +156,6 @@ private extension VehicleStatus {
         case .active: return "AVAILABLE"
         case .reserved: return "RESERVED"
         case .sold: return "SOLD"
-        }
-    }
-}
-
-// MARK: - Private helpers
-
-private extension DefaultVehicleRemoteDataSource {
-    func decodableRequest<T: Decodable>(
-        url: URLConvertible,
-        method: HTTPMethod,
-        parameters: Parameters? = nil,
-        encoding: ParameterEncoding = URLEncoding.default
-    ) async throws -> T {
-        do {
-            let request = APIService.shared
-                .request(url, method: method, parameters: parameters, encoding: encoding)
-                .validate()
-            return try await request.serializingDecodable(T.self).value
-        } catch {
-            throw ErrorMapper.map(error)
-        }
-    }
-
-    func decodableRequest<T: Decodable, Body: Encodable>(
-        url: URLConvertible,
-        method: HTTPMethod,
-        body: Body,
-        encoder: ParameterEncoder
-    ) async throws -> T {
-        do {
-            let request = APIService.shared
-                .request(url, method: method, parameters: body, encoder: encoder)
-                .validate()
-            return try await request.serializingDecodable(T.self).value
-        } catch {
-            throw ErrorMapper.map(error)
-        }
-    }
-
-    func dataRequest(
-        url: URLConvertible,
-        method: HTTPMethod,
-        parameters: Parameters? = nil,
-        encoding: ParameterEncoding = URLEncoding.default
-    ) async throws {
-        do {
-            let request = APIService.shared
-                .request(url, method: method, parameters: parameters, encoding: encoding)
-                .validate()
-            _ = try await request.serializingData().value
-        } catch {
-            throw ErrorMapper.map(error)
         }
     }
 }
