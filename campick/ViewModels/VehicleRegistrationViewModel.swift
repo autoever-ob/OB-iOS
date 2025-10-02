@@ -114,14 +114,52 @@ final class VehicleRegistrationViewModel: ObservableObject {
         vehicleOptions = availableOptions.map { VehicleOption(optionName: $0, isInclude: included.contains($0)) }
     }
 
-    func validateAndSubmit() {
-        errors = [:]
-        var newErrors: [String: String] = [:]
+    func toggleOption(_ option: VehicleOption) {
+        guard let index = vehicleOptions.firstIndex(where: { $0.optionName == option.optionName }) else { return }
+        vehicleOptions[index].isInclude.toggle()
+    }
 
-        if title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { newErrors["title"] = "매물 제목을 입력하세요" }
-        if generation.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { newErrors["generation"] = "연식을 입력하세요" }
-        if mileage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { newErrors["mileage"] = "주행거리를 입력하세요" }
-        if vehicleType.isEmpty { newErrors["vehicleType"] = "차량 종류를 선택해주세요" }
+    func setMainImage(_ imageId: UUID) {
+        guard let index = vehicleImages.firstIndex(where: { $0.id == imageId }) else { return }
+        for idx in vehicleImages.indices {
+            vehicleImages[idx].isMain = (idx == index)
+        }
+    }
+
+    func removeImage(_ imageId: UUID) {
+        if let index = vehicleImages.firstIndex(where: { $0.id == imageId }) {
+            if let url = vehicleImages[index].uploadedUrl {
+                uploadedImageUrls.removeAll { $0 == url }
+            }
+            vehicleImages.remove(at: index)
+        }
+    }
+
+    func handlePickedImages(_ items: [PhotosPickerItem]) {
+        selectedPhotos = items
+        Task {
+            for item in items {
+                if let data = try? await item.loadTransferable(type: Data.self),
+                   let image = UIImage(data: data) {
+                    let isFirst = vehicleImages.isEmpty
+                    let newImage = VehicleImage(image: image, isMain: isFirst)
+                    vehicleImages.append(newImage)
+                    if isFirst {
+                        // 메인 이미지 초기화
+                        uploadedImageUrls.removeAll()
+                    }
+                    uploadImage(image, for: newImage.id)
+                }
+            }
+        }
+    }
+
+    func validateForm() {
+        var newErrors: [String: String] = [:]
+        if title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { newErrors["title"] = "제목을 입력해주세요" }
+        if generation.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { newErrors["generation"] = "연식을 입력해주세요" }
+        if mileage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { newErrors["mileage"] = "주행거리를 입력해주세요" }
+        if vehicleType.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { newErrors["vehicleType"] = "차량 유형을 선택해주세요" }
         if vehicleModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { newErrors["vehicleModel"] = "차량 브랜드/모델을 입력해주세요" }
         if price.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { newErrors["price"] = "판매 가격을 입력하세요" }
         if location.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { newErrors["location"] = "판매 지역을 입력하세요" }
@@ -240,3 +278,4 @@ final class VehicleRegistrationViewModel: ObservableObject {
         }
     }
 }
+

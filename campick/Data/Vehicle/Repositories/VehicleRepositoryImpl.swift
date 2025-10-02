@@ -111,3 +111,4 @@ final class VehicleRepositoryImpl: VehicleRepository {
         }
     }
 }
+

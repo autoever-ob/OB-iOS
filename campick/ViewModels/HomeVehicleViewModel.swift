@@ -8,7 +8,6 @@
 import Foundation
 import UIKit
 
-
 final class HomeVehicleViewModel: ObservableObject {
     private let fetchRecommendationsUseCase: FetchVehicleRecommendationsUseCase
     private let toggleLikeUseCase: ToggleVehicleLikeUseCase
@@ -184,3 +183,4 @@ final class HomeVehicleViewModel: ObservableObject {
         }
     }
 }
+
