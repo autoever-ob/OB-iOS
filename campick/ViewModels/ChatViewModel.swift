@@ -20,6 +20,33 @@ final class ChatViewModel: ObservableObject {
     
     @Published var uploadedImageUrl: String? = nil
     
+    // 현재 관찰 중인 채팅방 ID (온라인 상태 필터링용)
+    private(set) var currentChatId: Int?
+    
+    // 낙관적 렌더링 중복 제거용
+    private var optimisticKeys = Set<String>()
+    private var optimisticIndexByKey: [String: Int] = [:]
+    
+    private var myMemberId: Int { Int(UserState.shared.memberId) ?? -1 }
+    
+    private func makeOptimisticKey(content: String, senderId: Int) -> String {
+        return "\(currentChatId ?? -1)|\(senderId)|\(content)"
+    }
+    
+    func optimisticAppendSent(content: String) {
+        let key = makeOptimisticKey(content: content, senderId: myMemberId)
+        let chat = Chat(
+            message: content,
+            senderId: myMemberId,
+            sendAt: "보내는중...",
+            isRead: false
+        )
+        messages.append(chat)
+        optimisticKeys.insert(key)
+        optimisticIndexByKey[key] = messages.count - 1
+        print("🪄 optimistic append, key=\(key), idx=\(messages.count - 1)")
+    }
+    
     
     //    func bindWebSocket() {
     //        WebSocket.shared.onMessageReceived = { [weak self] newMessage in
@@ -32,27 +59,55 @@ final class ChatViewModel: ObservableObject {
     //            self?.messages.append(chat)
     //        }
     //    }
-    func bindWebSocket() {
+    func bindWebSocket(chatId: Int) {
+        currentChatId = chatId
         WebSocket.shared.onMessageReceived = { [weak self] response in
             guard let self = self else { return }
             
             switch response {
             case .chat(let chatData):
+                
+                guard chatData.chatId == chatId else {
+                                print("무시: 다른 채팅방 메시지")
+                                return
+                            }
+                
+                let key = self.makeOptimisticKey(content: chatData.content, senderId: chatData.senderId)
                 let chat = Chat(
                     message: chatData.content,
                     senderId: chatData.senderId,
                     sendAt: chatData.sendAt,
                     isRead: chatData.isRead
                 )
-                self.messages.append(chat)
+                if chatData.senderId == self.myMemberId, self.optimisticKeys.contains(key) {
+                    if let idx = self.optimisticIndexByKey[key], idx < self.messages.count {
+                        self.messages[idx] = chat
+                        print("🔁 replace optimistic at idx=\(idx), total=\(self.messages.count)")
+                    } else {
+                        self.messages.append(chat)
+                        print("🧩 append chat(fallback), total messages: \(self.messages.count)")
+                    }
+                    self.optimisticKeys.remove(key)
+                    self.optimisticIndexByKey.removeValue(forKey: key)
+                } else {
+                    self.messages.append(chat)
+                    print("🧩 append chat, total messages: \(self.messages.count)")
+                }
                 
             case .online(let onlineList):
-                print("온라인 상태 업데이트는 ChatListViewModel에서 처리해야 함: \(onlineList)")
+                // 현재 채팅방에 해당하는 온라인 상태만 반영
+                if let cid = self.currentChatId,
+                   let target = onlineList.first(where: { $0.chatId == cid }) {
+                    self.seller?.isOnline = target.isOnline
+                    self.objectWillChange.send()
+                    print("📡 채팅방 \(target.chatId) 온라인 상태: \(target.isOnline) [ChatViewModel]")
+                }
             }
         }
     }
     
     func loadChatRoom(chatRoomId: Int) {
+        currentChatId = chatRoomId
         ChatService.shared.getChatMessages(chatRoomId: chatRoomId) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
@@ -84,6 +139,7 @@ final class ChatViewModel: ObservableObject {
                             isRead: chat.isRead
                         )
                     }
+                    print("🧩 loaded messages: \(self?.messages.count ?? 0)")
                     
                 case .failure(let error):
                     self?.errorMessage = error.localizedDescription
@@ -179,23 +235,5 @@ final class ChatViewModel: ObservableObject {
         return "\(formatted)만원"
     }
     
-    func observeChatRoomOnlineStatus(chatId: Int) {
-        WebSocket.shared.onMessageReceived = { [weak self] response in
-            guard let self = self else { return }
-            
-            switch response {
-            case .chat:
-                break
-            case .online(let onlineList):
-                // 특정 chatId만 필터링
-                if let target = onlineList.first(where: { $0.chatId == chatId }) {
-                    print("📡 채팅방 \(target.chatId) 온라인 상태: \(target.isOnline)")
-                    // ChatViewModel에서 seller에 반영
-                    self.seller?.isOnline = target.isOnline
-                    // UI 즉시 갱신
-                    self.objectWillChange.send()
-                }
-            }
-        }
-    }
+    // observeChatRoomOnlineStatus: 불필요 (bindWebSocket에서 통합 처리)
 }

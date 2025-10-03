@@ -17,6 +17,10 @@ class WebSocket {
         return webSocketTask?.state == .running
     }
     func connect(userId: String) {
+        guard !userId.isEmpty else {
+            print("⚠️ WebSocket.connect: empty userId, abort connect")
+            return
+        }
         guard let url = URL(string: "wss://campick.shop/ws/\(userId)") else { return }
         let urlSession = URLSession(configuration: .default)
         webSocketTask = urlSession.webSocketTask(with: url)
@@ -144,6 +148,7 @@ struct ReceivedChatMessagePayload: Decodable {
 }
 
 struct ReceivedChatMessageData: Decodable {
+    let chatId: Int
     let content: String
     let senderId: Int
     let sendAt: String
@@ -153,5 +158,4 @@ struct ReceivedChatMessageData: Decodable {
 struct ChatInit: Encodable {
     let type: String
 }
-
 
